@@ -58,6 +58,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 public class SkystoneAutonMode extends LinearOpMode {
 
+
+
+    protected final float robotToStoneStart = (47-18) * 25.4f;
     protected DcMotor leftFront;
     protected DcMotor leftBack;
     protected DcMotor rightFront;
@@ -97,25 +100,32 @@ public class SkystoneAutonMode extends LinearOpMode {
     protected void locateStoneTarget()
     {
         targetVisible = false;
-        for (VuforiaTrackable trackable : allTrackables) {
-            if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible() && trackable.getName() == "Stone Target") {
-                telemetry.addLine("Stone Target Visible");
-                targetVisible = true;
+        //for (VuforiaTrackable trackable : allTrackables) {
+        if (((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).isVisible() && targetsSkyStone.get(0).getName() == "Stone Target") { //.get(0) returns the Skystone target
+            telemetry.addLine("Stone Target Visible");
 
-                // getUpdatedRobotLocation() will return null if no new information is available since
-                // the last time that call was made, or if the trackable is not currently visible.
-                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
-                if (robotLocationTransform != null) {
-                    lastLocation = robotLocationTransform;
-                }
-                break;
+            targetVisible = true;
+
+            // getUpdatedRobotLocation() will return null if no new information is available since
+            // the last time that call was made, or if the trackable is not currently visible.
+            OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).getUpdatedRobotLocation();
+            if (robotLocationTransform != null) {
+                lastLocation = robotLocationTransform;
+            }
+
+            OpenGLMatrix stoneLocationTransform = ((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).getPosePhone();
+            if (stoneLocationTransform != null) {
+                stoneLastLocation = stoneLocationTransform;
+                stoneLastTranslate = stoneLocationTransform.getTranslation();
             }
         }
+        //}
 
         // Provide feedback as to where the robot is located (if we know).
         if (targetVisible) {
-            // express position (translation) of robot in inches.
-            VectorF translation = lastLocation.getTranslation();
+            // express position (translation) of stone relative to robot
+
+            VectorF translation = stoneLastLocation.getTranslation();
             telemetry.addData("Pos (mm)", "{X, Y, Z} = %.1f, %.1f, %.1f",
                     translation.get(0), translation.get(1), translation.get(2));
 
@@ -124,6 +134,20 @@ public class SkystoneAutonMode extends LinearOpMode {
             telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
         } else {
             telemetry.addData("Visible Target", "none");
+
+
+
+
+
+            /**VectorF translation = lastLocation.getTranslation();
+            telemetry.addData("Pos (mm)", "{X, Y, Z} = %.1f, %.1f, %.1f",
+                    translation.get(0), translation.get(1), translation.get(2));
+
+            // express the rotation of the robot in degrees.
+            Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
+            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+        } else {
+            telemetry.addData("Visible Target", "none");**/
         }
         telemetry.update();
     }
@@ -188,6 +212,8 @@ public class SkystoneAutonMode extends LinearOpMode {
 
     // Class Members
     protected OpenGLMatrix lastLocation = null;
+    protected OpenGLMatrix stoneLastLocation = null;
+    protected VectorF stoneLastTranslate = null;
     protected VuforiaLocalizer vuforia = null;
     protected VuforiaTrackables targetsSkyStone = null;
     protected List<VuforiaTrackable> allTrackables = null;

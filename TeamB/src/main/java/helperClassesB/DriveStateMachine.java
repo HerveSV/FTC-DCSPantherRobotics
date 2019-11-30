@@ -6,11 +6,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 public class DriveStateMachine {
 
-    private final DcMotor m_left1; //These cannot be changed into other motors once assigned in the constructor
-    private final DcMotor m_left2;
-    private final DcMotor m_right1;
-    private final DcMotor m_right2;
-    private final DcMotor m_hMotor;
+    protected final DcMotor m_left1; //These cannot be changed into other motors once assigned in the constructor
+    protected final DcMotor m_left2;
+    protected final DcMotor m_right1;
+    protected final DcMotor m_right2;
+    protected final DcMotor m_hMotor;
 
     public enum DriveTrain {
         DRIVE_TRAIN_MECANUM,
@@ -19,18 +19,28 @@ public class DriveStateMachine {
         DRIVE_TRAIN_PUSHBOT,
     }
 
-    private final DriveTrain driveTrain;
+    protected final DriveTrain driveTrain;
 
 
-    private LinearOpMode m_opMode;
+    protected LinearOpMode m_opMode;
 
     static final double COUNTS_PER_MOTOR_REV = 1478.4;    // Number of ticks for every full revolution/rotation of the motor shaft
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // Depends on gearing ratio between motor and wheel
-    static final double WHEEL_DIAMETER_CM = 4.0;     // For figuring circumference
-    static final double COUNTS_PER_CM = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_CM * 3.1415);  //This is the amount of ticks we have every cm travelled by the wheel
-    static final double DRIVE_SPEED = 0.6;
-    static final double TURN_SPEED = 0.5;
+    static final double WHEEL_DIAMETER_MM = 4.0;     // For figuring circumference
+    static final double COUNTS_PER_MM = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_MM * 3.1415);  //This is the amount of ticks we have every cm travelled by the wheel
+    //static final double DRIVE_SPEED = 0.6;
+    //static final double TURN_SPEED = 0.5;
 
+
+    protected DriveStateMachine()
+    {
+        m_left1 = null;
+        m_right1 = null;
+        m_left2 = null;
+        m_right2 = null;
+        m_hMotor = null;
+        driveTrain = null;
+    }
 
     public DriveStateMachine(DcMotor leftFront, DcMotor rightFront, DcMotor leftBack, DcMotor rightBack, LinearOpMode opMode, DriveTrain train) { //the constructor
 
@@ -87,6 +97,7 @@ public class DriveStateMachine {
         BACKWARDS,
         LEFTSTRAFE,
         RIGHTSTRAFE,
+        STRAFE,
         TURNLEFT,
         TURNRIGHT,
         ARMUP,
@@ -95,34 +106,45 @@ public class DriveStateMachine {
         BOTDOWN,
         CHECK,
         STOP
-    }
+    };
 
-    ;
-
-    public void runState(State currState, double distanceCm) {
+    public void runState(State currState, double distanceMm, double speed) {
         //this function is called
+        if(distanceMm == 0)
+        {
+            return;
+        }
         switch (driveTrain) {
 
             case DRIVE_TRAIN_MECANUM:
                 switch (currState) {
                     case FORWARDS:
-                        encoderDrive(DRIVE_SPEED, distanceCm, distanceCm, distanceCm, distanceCm);
+                        encoderDrive(speed, distanceMm, distanceMm, distanceMm, distanceMm);
                         break;
                     case BACKWARDS:
-                        encoderDrive(DRIVE_SPEED, -distanceCm, -distanceCm, -distanceCm, -distanceCm);
+                        encoderDrive(speed, -distanceMm, -distanceMm, -distanceMm, -distanceMm);
                         break;
                     case LEFTSTRAFE:
-                        encoderDrive(DRIVE_SPEED, distanceCm, -distanceCm, -distanceCm, distanceCm);
+                        encoderDrive(speed, distanceMm, -distanceMm, -distanceMm, distanceMm);
                         break;
                     case RIGHTSTRAFE:
-                        encoderDrive(DRIVE_SPEED, -distanceCm, distanceCm, distanceCm, -distanceCm);
+                        encoderDrive(speed, -distanceMm, distanceMm, distanceMm, -distanceMm);
                         break;
                     case TURNLEFT:
-                        encoderDrive(TURN_SPEED, -distanceCm, -distanceCm, distanceCm, distanceCm);
+                        encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(TURN_SPEED, distanceCm, distanceCm, -distanceCm, -distanceCm);
+                        encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
                         break;
+                    case STRAFE:
+                        if(distanceMm < 0)
+                        {
+                            runState(State.LEFTSTRAFE, distanceMm, speed);
+                        }
+                        else if(distanceMm > 0)
+                        {
+                            runState(State.RIGHTSTRAFE, distanceMm, speed);
+                        }
 
                     default:
                         break;
@@ -130,23 +152,32 @@ public class DriveStateMachine {
             case DRIVE_TRAIN_INVERSE_MECANUM:
                 switch (currState) {
                     case LEFTSTRAFE:
-                        encoderDrive(DRIVE_SPEED, distanceCm, distanceCm, distanceCm, distanceCm);
+                        encoderDrive(speed, distanceMm, distanceMm, distanceMm, distanceMm);
                         break;
                     case RIGHTSTRAFE:
-                        encoderDrive(DRIVE_SPEED, -distanceCm, -distanceCm, -distanceCm, -distanceCm);
+                        encoderDrive(speed, -distanceMm, -distanceMm, -distanceMm, -distanceMm);
                         break;
                     case FORWARDS:
-                        encoderDrive(DRIVE_SPEED, distanceCm, -distanceCm, -distanceCm, distanceCm);
+                        encoderDrive(speed, distanceMm, -distanceMm, -distanceMm, distanceMm);
                         break;
                     case BACKWARDS:
-                        encoderDrive(DRIVE_SPEED, -distanceCm, distanceCm, distanceCm, -distanceCm);
+                        encoderDrive(speed, -distanceMm, distanceMm, distanceMm, -distanceMm);
                         break;
                     case TURNLEFT:
-                        encoderDrive(TURN_SPEED, -distanceCm, -distanceCm, distanceCm, distanceCm);
+                        encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(TURN_SPEED, distanceCm, distanceCm, -distanceCm, -distanceCm);
+                        encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
                         break;
+                    case STRAFE:
+                        if(distanceMm < 0)
+                        {
+                            runState(State.LEFTSTRAFE, distanceMm, speed);
+                        }
+                        else if(distanceMm > 0)
+                        {
+                            runState(State.RIGHTSTRAFE, distanceMm, speed);
+                        }
 
                     default:
                         break;
@@ -154,23 +185,32 @@ public class DriveStateMachine {
             case DRIVE_TRAIN_HDRIVE:
                 switch (currState) {
                     case FORWARDS:
-                        encoderDrive(DRIVE_SPEED, distanceCm, distanceCm);
+                        encoderDrive(speed, distanceMm, distanceMm);
                         break;
                     case BACKWARDS:
-                        encoderDrive(DRIVE_SPEED, -distanceCm, -distanceCm);
+                        encoderDrive(speed, -distanceMm, -distanceMm);
                         break;
                     case LEFTSTRAFE:
-                        encoderDrive(DRIVE_SPEED, distanceCm, m_hMotor);
+                        encoderDrive(speed, distanceMm, m_hMotor);
                         break;
                     case RIGHTSTRAFE:
-                        encoderDrive(DRIVE_SPEED, -distanceCm, m_hMotor);
+                        encoderDrive(speed, -distanceMm, m_hMotor);
                         break;
                     case TURNLEFT:
-                        encoderDrive(TURN_SPEED, -distanceCm, distanceCm);
+                        encoderDrive(speed, -distanceMm, distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(TURN_SPEED, distanceCm, -distanceCm);
+                        encoderDrive(speed, distanceMm, -distanceMm);
                         break;
+                    case STRAFE:
+                        if(distanceMm < 0)
+                        {
+                            runState(State.LEFTSTRAFE, distanceMm, speed);
+                        }
+                        else if(distanceMm > 0)
+                        {
+                            runState(State.RIGHTSTRAFE, distanceMm, speed);
+                        }
 
                     default:
                         break;
@@ -179,16 +219,16 @@ public class DriveStateMachine {
             case DRIVE_TRAIN_PUSHBOT:
                 switch (currState) {
                     case FORWARDS:
-                        encoderDrive(DRIVE_SPEED, distanceCm, distanceCm);
+                        encoderDrive(speed, distanceMm, distanceMm);
                         break;
                     case BACKWARDS:
-                        encoderDrive(DRIVE_SPEED, -distanceCm, -distanceCm);
+                        encoderDrive(speed, -distanceMm, -distanceMm);
                         break;
                     case TURNLEFT:
-                        encoderDrive(TURN_SPEED, -distanceCm, distanceCm);
+                        encoderDrive(speed, -distanceMm, distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(TURN_SPEED, distanceCm, -distanceCm);
+                        encoderDrive(speed, distanceMm, -distanceMm);
                         break;
 
                     default:
@@ -199,7 +239,7 @@ public class DriveStateMachine {
 
 
     private void encoderDrive(double speed,
-                              double leftFrontCm, double leftBackCm, double rightFrontCm, double rightBackCm) {
+                              double leftFrontMm, double leftBackMm, double rightFrontMm, double rightBackMm) {
         int newLeftFrontTarget;
         int newLeftBackTarget;
         int newRightFrontTarget;
@@ -210,10 +250,10 @@ public class DriveStateMachine {
         if (m_opMode.opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newLeftFrontTarget = m_left1.getCurrentPosition() + (int) (leftFrontCm * COUNTS_PER_CM);
-            newLeftBackTarget = m_left2.getCurrentPosition() + (int) (leftBackCm * COUNTS_PER_CM);
-            newRightFrontTarget = m_right1.getCurrentPosition() + (int) (rightFrontCm * COUNTS_PER_CM);
-            newRightBackTarget = m_right2.getCurrentPosition() + (int) (rightBackCm * COUNTS_PER_CM);
+            newLeftFrontTarget = m_left1.getCurrentPosition() + (int) (leftFrontMm * COUNTS_PER_MM);
+            newLeftBackTarget = m_left2.getCurrentPosition() + (int) (leftBackMm * COUNTS_PER_MM);
+            newRightFrontTarget = m_right1.getCurrentPosition() + (int) (rightFrontMm * COUNTS_PER_MM);
+            newRightBackTarget = m_right2.getCurrentPosition() + (int) (rightBackMm * COUNTS_PER_MM);
 
             m_left1.setTargetPosition(newLeftFrontTarget);
             m_left2.setTargetPosition(newLeftBackTarget);
@@ -262,11 +302,11 @@ public class DriveStateMachine {
             m_right1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             m_right2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            m_opMode.sleep(250);   // optional pause after each move
+            //m_opMode.sleep(250);   // optional pause after each move
         }
     }
 
-    private void encoderDrive(double speed, double leftDriveCm, double rightDriveCm) {
+    private void encoderDrive(double speed, double leftDriveMm, double rightDriveMm) {
         int newLeftDriveTarget;
         int newRightDriveTarget;
 
@@ -275,8 +315,8 @@ public class DriveStateMachine {
         if (m_opMode.opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newLeftDriveTarget = m_left1.getCurrentPosition() + (int) (leftDriveCm * COUNTS_PER_CM);
-            newRightDriveTarget = m_right1.getCurrentPosition() + (int) (rightDriveCm * COUNTS_PER_CM);
+            newLeftDriveTarget = m_left1.getCurrentPosition() + (int) (leftDriveMm * COUNTS_PER_MM);
+            newRightDriveTarget = m_right1.getCurrentPosition() + (int) (rightDriveMm * COUNTS_PER_MM);
 
             m_left1.setTargetPosition(newLeftDriveTarget);
             m_right1.setTargetPosition(newRightDriveTarget);
@@ -313,11 +353,11 @@ public class DriveStateMachine {
             m_left1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             m_right1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            m_opMode.sleep(250);   // optional pause after each move
+            //m_opMode.sleep(250);   // optional pause after each move
         }
     }
 
-    private void encoderDrive(double speed, double driveCm, DcMotor motor) {
+    private void encoderDrive(double speed, double driveMm, DcMotor motor) {
         int newDriveTarget;
 
 
@@ -325,7 +365,7 @@ public class DriveStateMachine {
         if (m_opMode.opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newDriveTarget = motor.getCurrentPosition() + (int) (driveCm * COUNTS_PER_CM);
+            newDriveTarget = motor.getCurrentPosition() + (int) (driveMm * COUNTS_PER_MM);
 
             motor.setTargetPosition(newDriveTarget);
 
@@ -356,7 +396,7 @@ public class DriveStateMachine {
             // Turn off RUN_TO_POSITION
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            m_opMode.sleep(250);   // optional pause after each move
+            //m_opMode.sleep(250);   // optional pause after each move
         }
     }
 }
