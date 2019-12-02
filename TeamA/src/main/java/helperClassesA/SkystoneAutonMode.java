@@ -94,9 +94,6 @@ public class SkystoneAutonMode extends LinearOpMode {
     }
 
 
-
-
-
     protected void locateStoneTarget()
     {
         targetVisible = false;
