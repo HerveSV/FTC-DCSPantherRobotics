@@ -28,6 +28,11 @@ public class FullUtilMecanumDrive extends LinearOpMode {
         leftTraction = hardwareMap.get(DcMotor.class, "leftTraction");
         rightTraction = hardwareMap.get(DcMotor.class, "rightTraction");
 
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         /* Wait for the game to start (driver presses PLAY) waitForStart(); */
@@ -201,6 +206,11 @@ public class FullUtilMecanumDrive extends LinearOpMode {
                 leftTraction.setPower(-1);
                 rightTraction.setPower(1);
             }
+            else
+            {
+                leftTraction.setPower(0);
+                rightTraction.setPower(0);
+            }
 
 
             telemetry.addData("LeftFront Power", leftFront.getPower());
@@ -212,6 +222,7 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             {
                 telemetry.addData("Slow Move", "ON");
             }
+            if(moveTraction)
 
             telemetry.addData("Status", "Running");
             telemetry.update();

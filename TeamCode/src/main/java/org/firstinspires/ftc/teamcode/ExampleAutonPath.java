@@ -30,10 +30,10 @@ public class ExampleAutonPath extends LinearOpMode {
         waitForStart();
 
         //this completes a complete square shaped path
-        robotState.runState(DriveStateMachine.State.FORWARDS, 30); //each side of this square path measures 30cm
-        robotState.runState(DriveStateMachine.State.LEFTSTRAFE, 30);
-        robotState.runState(DriveStateMachine.State.BACKWARDS, 30);
-        robotState.runState(DriveStateMachine.State.RIGHTSTRAFE, 30);
+        robotState.runState(DriveStateMachine.State.FORWARDS, 30, 0.5); //each side of this square path measures 30cm
+        robotState.runState(DriveStateMachine.State.LEFTSTRAFE, 30, 0.5);
+        robotState.runState(DriveStateMachine.State.BACKWARDS, 30, 0.5);
+        robotState.runState(DriveStateMachine.State.RIGHTSTRAFE, 30, 0.5);
 
         telemetry.addData("Path", "Complete");
         telemetry.update();
