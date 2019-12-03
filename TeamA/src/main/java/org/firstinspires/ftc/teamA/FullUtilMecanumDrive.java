@@ -31,7 +31,7 @@ public class FullUtilMecanumDrive extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         /* Wait for the game to start (driver presses PLAY) waitForStart(); */
-        leftFront.setDirection(DcMotor.Direction.REVERSE);
+        //leftFront.setDirection(DcMotor.Direction.REVERSE);
         leftBack.setDirection(DcMotor.Direction.REVERSE);
 
 

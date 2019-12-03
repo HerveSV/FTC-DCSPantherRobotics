@@ -399,6 +399,25 @@ public class DriveStateMachine {
             //m_opMode.sleep(250);   // optional pause after each move
         }
     }
+
+    protected double encoderLimit = 0;
+
+    public void setRangeLimit(double rangeMm)
+    {
+        if(driveTrain == DriveTrain.DRIVE_TRAIN_MECANUM || driveTrain == DriveTrain.DRIVE_TRAIN_INVERSE_MECANUM)
+        {
+            m_left1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            m_left2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            m_right1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            m_right2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        }
+        encoderLimit = rangeMm * COUNTS_PER_MM;
+    }
+
+    public void updateRange()
+    {
+
+    }
 }
 
 

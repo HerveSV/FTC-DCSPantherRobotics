@@ -23,6 +23,7 @@ public class AutonMode1 extends SkystoneAutonMode {
 
         DriveStateMachine robotState = new DriveStateMachine(leftFront, rightFront, leftBack, rightBack, this, DriveStateMachine.DriveTrain.DRIVE_TRAIN_MECANUM);
 
+
         waitForStart();
         initVuforia();
         targetsSkyStone.activate();
