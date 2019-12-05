@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 public class ExampleClassRES extends LinearOpMode {
 
@@ -23,7 +24,6 @@ public class ExampleClassRES extends LinearOpMode {
         waitForStart();
         //Wait till the final run button is pressed
 
-
         while(opModeIsActive()) //game loop, will run until program is closed
         {
             double motorPower = this.gamepad1.right_stick_y;
@@ -32,7 +32,7 @@ public class ExampleClassRES extends LinearOpMode {
             boolean moveServo180 = this.gamepad1.right_bumper;
             //if the right bumper is pressed, the variable is true, if not - false;
 
-            motor.setPower(motorPower);
+            motor.setPower(Range.clip(-1 , 1, motorPower));
             //motor is given power value: a negative power means backwards movement, 0 means stop, positive means forwards
 
 
@@ -50,6 +50,7 @@ public class ExampleClassRES extends LinearOpMode {
 
             telemetry.addData("Motor Power: ", motorPower);
             telemetry.addData("Servo in position: ", moveServo180);
+            telemetry.addLine("Hey, its a line");
             //telemetry data to be sent to the driver phone on telemetry.update
 
             telemetry.update();
@@ -57,6 +58,7 @@ public class ExampleClassRES extends LinearOpMode {
 
             idle(); //cleanup routine at the end of every iteration
         }
+
     }
 
 }

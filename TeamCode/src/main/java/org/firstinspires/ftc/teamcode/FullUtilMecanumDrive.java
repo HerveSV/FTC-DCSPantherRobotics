@@ -28,10 +28,15 @@ public class FullUtilMecanumDrive extends LinearOpMode {
         leftTraction = hardwareMap.get(DcMotor.class, "leftTraction");
         rightTraction = hardwareMap.get(DcMotor.class, "rightTraction");
 
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         /* Wait for the game to start (driver presses PLAY) waitForStart(); */
-        leftFront.setDirection(DcMotor.Direction.REVERSE);
+        //leftFront.setDirection(DcMotor.Direction.REVERSE);
         leftBack.setDirection(DcMotor.Direction.REVERSE);
 
 
@@ -71,6 +76,9 @@ public class FullUtilMecanumDrive extends LinearOpMode {
         boolean moveTraction = false;
         double rbToggleTime = 0;
 
+        double speedMod = 1;
+
+
         waitForStart();
         while (opModeIsActive()) {
 
@@ -84,10 +92,12 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             boolean B_button1 = this.gamepad1.b;
             if(B_button1 && slowMove && (this.getRuntime()-bToggleTime)>= toggleDelay) {
                 slowMove = false;
+                speedMod = 1;
                 bToggleTime = this.getRuntime();
             }
             else if(B_button1 && (this.getRuntime()-bToggleTime)>= toggleDelay) {
                 slowMove = true;
+                speedMod = 0.25;
                 bToggleTime = this.getRuntime();
             }
 
@@ -105,18 +115,10 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             double rightBackPwr = y-x-turn;//y+x-turn;//
 
 
-            if(!slowMove) {
-                leftFront.setPower(Range.clip(leftFrontPwr, -1, 1)); //clip here is just a safety measure
-                leftBack.setPower(Range.clip(leftBackPwr, -1, 1));
-                rightFront.setPower(Range.clip(rightFrontPwr, -1, 1));
-                rightBack.setPower(Range.clip(rightBackPwr, -1, 1));
-            }
-            else {
-                leftFront.setPower(Range.clip(leftFrontPwr, -1, 1)/4); //clip here is just a safety measure
-                leftBack.setPower(Range.clip(leftBackPwr, -1, 1)/4);
-                rightFront.setPower(Range.clip(rightFrontPwr, -1, 1)/4);
-                rightBack.setPower(Range.clip(rightBackPwr, -1, 1)/4);
-            }
+            leftFront.setPower(Range.clip(leftFrontPwr * speedMod, -1, 1)); //clip here is just a safety measure
+            leftBack.setPower(Range.clip(leftBackPwr * speedMod, -1, 1));
+            rightFront.setPower(Range.clip(rightFrontPwr * speedMod, -1, 1));
+            rightBack.setPower(Range.clip(rightBackPwr * speedMod, -1, 1));
 
 
             wheelMode = "D-pad Movement";
@@ -127,59 +129,31 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             boolean frontStrafe = this.gamepad1.dpad_down;
 
 
-            if(!slowMove) {
-                if (leftStrafe) {  // Left strafe
-                    leftFront.setPower(forwards);
-                    leftBack.setPower(backwards);
-                    rightFront.setPower(backwards);
-                    rightBack.setPower(forwards);
-                }
-                else if (rightStrafe) {// Right strafe
-                    leftFront.setPower(backwards);
-                    leftBack.setPower(forwards);
-                    rightFront.setPower(forwards);
-                    rightBack.setPower(backwards);
-                }
-                else if (frontStrafe) {
-                    leftFront.setPower(forwards);
-                    leftBack.setPower(forwards);
-                    rightFront.setPower(forwards);
-                    rightBack.setPower(forwards);
-                }
-                else if (backStrafe) {
-                    leftFront.setPower(backwards);
-                    leftBack.setPower(backwards);
-                    rightFront.setPower(backwards);
-                    rightBack.setPower(backwards);
-                }
+            if (leftStrafe) {  // Left strafe
+                leftFront.setPower(forwards * speedMod);
+                leftBack.setPower(backwards * speedMod);
+                rightFront.setPower(backwards * speedMod);
+                rightBack.setPower(forwards * speedMod);
             }
-            else if(slowMove)
-            {
-                if (leftStrafe) {  // Left strafe
-                    leftFront.setPower(forwards/2);
-                    leftBack.setPower(backwards/2);
-                    rightFront.setPower(backwards/2);
-                    rightBack.setPower(forwards/2);
-                }
-                else if (rightStrafe) {  // Right strafe
-                    leftFront.setPower(backwards/2);
-                    leftBack.setPower(forwards/2);
-                    rightFront.setPower(forwards/2);
-                    rightBack.setPower(backwards/2);
-                }
-                else if (frontStrafe) {
-                    leftFront.setPower(forwards/2);
-                    leftBack.setPower(forwards/2);
-                    rightFront.setPower(forwards/2);
-                    rightBack.setPower(forwards/2);
-                }
-                else if (backStrafe) {
-                    leftFront.setPower(backwards/2);
-                    leftBack.setPower(backwards/2);
-                    rightFront.setPower(backwards/2);
-                    rightBack.setPower(backwards/2);
-                }
+            else if (rightStrafe) {// Right strafe
+                leftFront.setPower(backwards * speedMod);
+                leftBack.setPower(forwards * speedMod);
+                rightFront.setPower(forwards * speedMod);
+                rightBack.setPower(backwards * speedMod);
             }
+            else if (frontStrafe) {
+                leftFront.setPower(forwards * speedMod);
+                leftBack.setPower(forwards * speedMod);
+                rightFront.setPower(forwards * speedMod);
+                rightBack.setPower(forwards * speedMod);
+            }
+            else if (backStrafe) {
+                leftFront.setPower(backwards * speedMod);
+                leftBack.setPower(backwards * speedMod);
+                rightFront.setPower(backwards * speedMod);
+                rightBack.setPower(backwards * speedMod);
+            }
+
 
 
 
@@ -201,6 +175,11 @@ public class FullUtilMecanumDrive extends LinearOpMode {
                 leftTraction.setPower(-1);
                 rightTraction.setPower(1);
             }
+            else
+            {
+                leftTraction.setPower(0);
+                rightTraction.setPower(0);
+            }
 
 
             telemetry.addData("LeftFront Power", leftFront.getPower());
@@ -212,6 +191,7 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             {
                 telemetry.addData("Slow Move", "ON");
             }
+            if(moveTraction)
 
             telemetry.addData("Status", "Running");
             telemetry.update();
