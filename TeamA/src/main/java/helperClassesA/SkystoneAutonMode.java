@@ -30,6 +30,7 @@
 package helperClassesA;
 
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -66,8 +67,15 @@ public class SkystoneAutonMode extends LinearOpMode {
     protected DcMotor rightFront;
     protected DcMotor rightBack;
 
+    /**
+     * ATTENTION: The initRevImu method has to be called before using it.
+     */
+
+    protected BNO055IMU revImu;
+
     @Override
-    public void runOpMode() {
+    public void runOpMode() throws InterruptedException
+    {
 
         /*leftFront = hardwareMap.get(DcMotor.class, "leftFront");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
@@ -388,6 +396,38 @@ public class SkystoneAutonMode extends LinearOpMode {
         for (VuforiaTrackable trackable : allTrackables) {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
+    }
+
+    protected void initRevImu()
+    {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        parameters.mode                = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json";
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        revImu = hardwareMap.get(BNO055IMU.class, "imu");
+
+        revImu.initialize(parameters);
+
+        telemetry.addData("Mode", "calibrating...");
+        telemetry.update();
+
+        // make sure the imu gyro is calibrated before continuing.
+        while (!isStopRequested() && !revImu.isGyroCalibrated())
+        {
+            sleep(50);
+            idle();
+        }
+
+        telemetry.addData("Mode", "waiting for start");
+        telemetry.addData("imu calib status", revImu.getCalibrationStatus().toString());
+        telemetry.update();
     }
 
 

@@ -18,7 +18,8 @@ public class BasicMechanumDrive extends LinearOpMode {
     //private DcMotor rightTraction;
 
     @Override
-    public void runOpMode(){
+    public void runOpMode() throws InterruptedException
+    {
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");

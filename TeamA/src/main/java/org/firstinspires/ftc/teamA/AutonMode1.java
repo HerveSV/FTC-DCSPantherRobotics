@@ -14,14 +14,16 @@ public class AutonMode1 extends SkystoneAutonMode {
 
 
     @Override
-    public void runOpMode(){
+    public void runOpMode() throws InterruptedException
+    {
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
 
-        DriveStateMachine robotState = new DriveStateMachine(leftFront, rightFront, leftBack, rightBack, this, DriveStateMachine.DriveTrain.DRIVE_TRAIN_MECANUM);
+        initRevImu();
+        DriveStateMachine robotState = new DriveStateMachine(leftFront, rightFront, leftBack, rightBack, revImu,this, DriveStateMachine.DriveTrain.DRIVE_TRAIN_MECANUM);
 
 
         waitForStart();

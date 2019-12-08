@@ -8,7 +8,7 @@ import helperClassesA.SkystoneAutonMode;
 public class testCamera extends SkystoneAutonMode {
 
     @Override
-    public void runOpMode()
+    public void runOpMode() throws InterruptedException
     {
         waitForStart();
         initVuforia();
