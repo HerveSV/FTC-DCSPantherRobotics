@@ -120,6 +120,7 @@ public class DriveStateMachine {
         STRAFE,
         TURNLEFT,
         TURNRIGHT,
+        TURN,
         ARMUP,
         ARMDOWN,
         FLIPSERVO,
@@ -151,10 +152,15 @@ public class DriveStateMachine {
                         encoderDrive(speed, -distanceMm, distanceMm, distanceMm, -distanceMm);
                         break;
                     case TURNLEFT:
-                        encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
+                        //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
+                        encoderRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
+                        //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
+                        encoderRotate(speed, distanceMm);
+                        break;
+                    case TURN:
+                        encoderRotate(speed, distanceMm);
                         break;
                     case STRAFE:
                         if(distanceMm < 0)
@@ -165,7 +171,7 @@ public class DriveStateMachine {
                         {
                             runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
-
+                        break;
                     default:
                         break;
                 }
@@ -184,10 +190,15 @@ public class DriveStateMachine {
                         encoderDrive(speed, -distanceMm, distanceMm, distanceMm, -distanceMm);
                         break;
                     case TURNLEFT:
-                        encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
+                        //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
+                        encoderRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
+                        //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
+                        encoderRotate(speed, distanceMm);
+                        break;
+                    case TURN:
+                        encoderRotate(speed, distanceMm);
                         break;
                     case STRAFE:
                         if(distanceMm < 0)
@@ -198,6 +209,7 @@ public class DriveStateMachine {
                         {
                             runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
+                        break;
 
                     default:
                         break;
@@ -217,10 +229,15 @@ public class DriveStateMachine {
                         encoderDrive(speed, -distanceMm, hMotor);
                         break;
                     case TURNLEFT:
-                        encoderDrive(speed, -distanceMm, distanceMm);
+                        //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
+                        encoderRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(speed, distanceMm, -distanceMm);
+                        //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
+                        encoderRotate(speed, distanceMm);
+                        break;
+                    case TURN:
+                        encoderRotate(speed, distanceMm);
                         break;
                     case STRAFE:
                         if(distanceMm < 0)
@@ -231,7 +248,7 @@ public class DriveStateMachine {
                         {
                             runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
-
+                        break;
                     default:
                         break;
                 }
@@ -245,10 +262,15 @@ public class DriveStateMachine {
                         encoderDrive(speed, -distanceMm, -distanceMm);
                         break;
                     case TURNLEFT:
-                        encoderDrive(speed, -distanceMm, distanceMm);
+                        //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
+                        encoderRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
-                        encoderDrive(speed, distanceMm, -distanceMm);
+                        //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
+                        encoderRotate(speed, distanceMm);
+                        break;
+                    case TURN:
+                        encoderRotate(speed, distanceMm);
                         break;
 
                     default:
@@ -480,12 +502,8 @@ public class DriveStateMachine {
         }
 
         // turn the motors off.
-        if(driveTrain == DriveTrain.DRIVE_TRAIN_HDRIVE || driveTrain == DriveTrain.DRIVE_TRAIN_PUSHBOT)
-        {
-            left1.setPower(0);
-            right1.setPower(0);
-        }
-        else if(driveTrain == DriveTrain.DRIVE_TRAIN_MECANUM || driveTrain == DriveTrain.DRIVE_TRAIN_INVERSE_MECANUM)
+
+        if(driveTrain == DriveTrain.DRIVE_TRAIN_MECANUM || driveTrain == DriveTrain.DRIVE_TRAIN_INVERSE_MECANUM)
         {
             left1.setPower(0);
             left2.setPower(0);
@@ -494,6 +512,12 @@ public class DriveStateMachine {
             right2.setPower(0);
 
         }
+        else if(driveTrain == DriveTrain.DRIVE_TRAIN_HDRIVE || driveTrain == DriveTrain.DRIVE_TRAIN_PUSHBOT)
+        {
+            left1.setPower(0);
+            right1.setPower(0);
+        }
+
 
 
         // wait for rotation to stop.
