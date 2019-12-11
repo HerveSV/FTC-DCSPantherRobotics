@@ -55,9 +55,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 
-@Disabled
+@TeleOp
 
-public class SkystoneAutonMode extends LinearOpMode {
+public class SkystoneAutonMode extends AutonOpMode {
 
 
 
@@ -71,11 +71,12 @@ public class SkystoneAutonMode extends LinearOpMode {
      * ATTENTION: The initRevImu method has to be called before using it.
      */
 
-    protected BNO055IMU revImu;
+    //protected BNO055IMU revImu;
 
     @Override
     public void runOpMode() throws InterruptedException
     {
+
 
         /*leftFront = hardwareMap.get(DcMotor.class, "leftFront");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
@@ -398,7 +399,7 @@ public class SkystoneAutonMode extends LinearOpMode {
         }
     }
 
-    protected void initRevImu()
+    /*protected void initRevImu()
     {
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
@@ -428,7 +429,7 @@ public class SkystoneAutonMode extends LinearOpMode {
         telemetry.addData("Mode", "waiting for start");
         telemetry.addData("imu calib status", revImu.getCalibrationStatus().toString());
         telemetry.update();
-    }
+    }*/
 
 
 

@@ -38,10 +38,10 @@ public class ExampleAutonPath extends SkystoneAutonMode {
             telemetry.addLine("Awaiting start (left bumper)");
             telemetry.update();
         }
-        robotState.runState(DriveStateMachine.State.FORWARDS, 30, 0.5); //each side of this square path measures 30cm
-        robotState.runState(DriveStateMachine.State.LEFTSTRAFE, 30, 0.5);
-        robotState.runState(DriveStateMachine.State.BACKWARDS, 30, 0.5);
-        robotState.runState(DriveStateMachine.State.RIGHTSTRAFE, 30, 0.5);
+        robotState.runState(DriveStateMachine.State.FORWARDS, 300, 0.5); //each side of this square path measures 30cm
+        robotState.runState(DriveStateMachine.State.LEFTSTRAFE, 300, 0.5);
+        robotState.runState(DriveStateMachine.State.BACKWARDS, 300, 0.5);
+        robotState.runState(DriveStateMachine.State.RIGHTSTRAFE, 300, 0.5);
 
         while(!this.gamepad1.left_bumper)
         {

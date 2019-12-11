@@ -5,8 +5,10 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
+import helperClassesA.SkystoneAutonMode;
+
 @TeleOp
-public class FullUtilMecanumDrive extends LinearOpMode {
+public class FullUtilMecanumDrive extends SkystoneAutonMode {
 
 
     private DcMotor leftFront;
