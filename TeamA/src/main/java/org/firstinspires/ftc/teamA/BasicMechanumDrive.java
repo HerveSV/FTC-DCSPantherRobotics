@@ -18,7 +18,7 @@ public class BasicMechanumDrive extends LinearOpMode {
     //private DcMotor rightTraction;
 
     @Override
-    public void runOpMode() throws InterruptedException
+    public void runOpMode()
     {
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -123,8 +123,8 @@ public class BasicMechanumDrive extends LinearOpMode {
 
             boolean leftStrafe = this.gamepad1.dpad_left;
             boolean rightStrafe = this.gamepad1.dpad_right;
-            boolean backStrafe = this.gamepad1.dpad_up;
-            boolean frontStrafe = this.gamepad1.dpad_down;
+            boolean backStrafe = this.gamepad1.dpad_down;
+            boolean frontStrafe = this.gamepad1.dpad_up;
 
 
 
