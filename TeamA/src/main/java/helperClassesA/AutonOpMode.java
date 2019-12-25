@@ -62,7 +62,7 @@ public class AutonOpMode extends LinearOpMode {
     }
 
 
-    public void runState(DriveStateMachine.State currState, double distanceMm, double speed) {
+    public void runState(State currState, double distanceMm, double speed) {
         //this function is called
         if(distanceMm == 0)
         {
@@ -98,11 +98,11 @@ public class AutonOpMode extends LinearOpMode {
                     case STRAFE:
                         if(distanceMm < 0)
                         {
-                            runState(DriveStateMachine.State.LEFTSTRAFE, distanceMm, speed);
+                            runState(State.LEFTSTRAFE, distanceMm, speed);
                         }
                         else if(distanceMm > 0)
                         {
-                            runState(DriveStateMachine.State.RIGHTSTRAFE, distanceMm, speed);
+                            runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
                         break;
                     default:
@@ -136,11 +136,11 @@ public class AutonOpMode extends LinearOpMode {
                     case STRAFE:
                         if(distanceMm < 0)
                         {
-                            runState(DriveStateMachine.State.LEFTSTRAFE, distanceMm, speed);
+                            runState(State.LEFTSTRAFE, distanceMm, speed);
                         }
                         else if(distanceMm > 0)
                         {
-                            runState(DriveStateMachine.State.RIGHTSTRAFE, distanceMm, speed);
+                            runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
                         break;
 
@@ -175,11 +175,11 @@ public class AutonOpMode extends LinearOpMode {
                     case STRAFE:
                         if(distanceMm < 0)
                         {
-                            runState(DriveStateMachine.State.LEFTSTRAFE, distanceMm, speed);
+                            runState(State.LEFTSTRAFE, distanceMm, speed);
                         }
                         else if(distanceMm > 0)
                         {
-                            runState(DriveStateMachine.State.RIGHTSTRAFE, distanceMm, speed);
+                            runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
                         break;
                     default:

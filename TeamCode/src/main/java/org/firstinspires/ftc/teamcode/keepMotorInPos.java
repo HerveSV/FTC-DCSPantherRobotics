@@ -51,7 +51,7 @@ public class keepMotorInPos extends LinearOpMode {
 
         diff = target + offset - current;
 
-        float val = MAXPOWER / THRESHOLD * diff;
+        float val = (MAXPOWER / THRESHOLD) * diff;
         if (Math.abs(diff) < THRESHOLD) {
             return val;
         } else {

@@ -28,6 +28,7 @@ public class ExampleAutonPath extends SkystoneAutonMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        initRevImu();
         DriveStateMachine robotState = new DriveStateMachine(leftFront, leftBack, rightFront, rightBack, revImu, this, DriveStateMachine.DriveTrain.DRIVE_TRAIN_MECANUM);
         waitForStart();
 

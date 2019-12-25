@@ -60,6 +60,14 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 public class SkystoneAutonMode extends AutonOpMode {
 
 
+    public enum RelativePos
+    {
+        LEFT,
+        CENTER,
+        RIGHT,
+        NOT_VISIBLE,
+        FAILED_TO_PROCESS,
+    };
 
     protected final float robotToStoneStart = (47-18) * 25.4f;
     protected DcMotor leftFront;
@@ -67,6 +75,8 @@ public class SkystoneAutonMode extends AutonOpMode {
     protected DcMotor rightFront;
     protected DcMotor rightBack;
 
+    protected double blockLeftThreshold = -10;
+    protected double blockRIghtThreshold = 20;
     /**
      * ATTENTION: The initRevImu method has to be called before using it.
      */
@@ -101,9 +111,57 @@ public class SkystoneAutonMode extends AutonOpMode {
             telemetry.update();
         }*/
     }
+    protected RelativePos locateStoneTarget(double tryTimeLimit)
+    {
+        updateStoneTargetPosition();
+        resetStartTime();
+        while(time < 4 && !targetVisible)
+        {
+            updateStoneTargetPosition();
+        }
+        if(!targetVisible)
+        {
+            return RelativePos.NOT_VISIBLE;
+        }
+
+        double x1 = stoneLastTranslate.get(0);
+        double x2 = 0;
+        double tempx;
+        resetStartTime();
+        boolean firstIt = true;
+        do {
+            updateStoneTargetPosition();
+            tempx = x2;
+            x2 = stoneLastTranslate.get(0);
+            if(!firstIt)
+            {
+                x1 = tempx;
+            }
+
+            firstIt = false;
+        }  while(!closeEnought(x1, x2, 0.5) && time < tryTimeLimit);
+
+        if(!closeEnought(x1, x2, 0.5))
+        {
+            return RelativePos.FAILED_TO_PROCESS;
+        }
+
+        if(x2 < 10)
+        {
+            return RelativePos.LEFT;
+        }
+        else if(x2 > 20)
+        {
+            return RelativePos.RIGHT;
+        }
+        else
+        {
+            return RelativePos.CENTER;
+        }
+    }
 
 
-    protected void locateStoneTarget()
+    protected void updateStoneTargetPosition()
     {
         targetVisible = false;
         //for (VuforiaTrackable trackable : allTrackables) {
@@ -128,7 +186,8 @@ public class SkystoneAutonMode extends AutonOpMode {
         //}
 
         // Provide feedback as to where the robot is located (if we know).
-        if (targetVisible) {
+        if (targetVisible)
+        {
             // express position (translation) of stone relative to robot
 
             VectorF translation = stoneLastLocation.getTranslation();
@@ -138,22 +197,10 @@ public class SkystoneAutonMode extends AutonOpMode {
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
             telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-        } else {
+        }
+        else
+        {
             telemetry.addData("Visible Target", "none");
-
-
-
-
-
-            /**VectorF translation = lastLocation.getTranslation();
-            telemetry.addData("Pos (mm)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                    translation.get(0), translation.get(1), translation.get(2));
-
-            // express the rotation of the robot in degrees.
-            Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-        } else {
-            telemetry.addData("Visible Target", "none");**/
         }
         telemetry.update();
     }
@@ -430,6 +477,33 @@ public class SkystoneAutonMode extends AutonOpMode {
         telemetry.addData("imu calib status", revImu.getCalibrationStatus().toString());
         telemetry.update();
     }*/
+
+    private boolean closeEnought(double par1, double par2, double precision)
+    {
+        /*double largerPar;
+        double smallerPar;
+        if(par1 > par2)
+        {
+            largerPar = par1;
+            smallerPar = par2;
+        }
+        else
+        {
+            largerPar = par2;
+            smallerPar = par1;
+        }*/
+
+        double diff = Math.abs(par1 - par2);
+        if(diff <= precision)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
 
 
 
