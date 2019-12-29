@@ -31,7 +31,10 @@ public class TestAutonMode extends SkystoneAutonMode {
         resetStartTime();
         while(!(targetVisible || stoneLastLocation == null) && getRuntime() < 3)
         {
-            locateStoneTarget();
+            if(locateStoneTarget() == RelativePos.CENTER)
+            {
+                telemetry.addLine("stone Centered");
+            }
         }
         robotState.navigateToSkystone(stoneLastTranslate, 15, 75, 0.5 );
         /*if(targetVisible && stoneLastLocation != null)

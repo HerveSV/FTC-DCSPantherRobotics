@@ -23,18 +23,12 @@ public class AutonMode1 extends SkystoneAutonMode {
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
 
         initRevImu();
-        DriveStateMachine robotState = new DriveStateMachine(leftFront, rightFront, leftBack, rightBack, revImu,this, DriveStateMachine.DriveTrain.DRIVE_TRAIN_MECANUM);
-
-
         waitForStart();
         initVuforia();
         targetsSkyStone.activate();
 
-        /**
-         *
-         * DO STUFF
-         *
-         */
+        runState(State.FORWARDS, 500, 0.5);
+
 
     }
 

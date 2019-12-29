@@ -30,11 +30,16 @@
 package helperClassesA;
 
 
+import android.graphics.Color;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.SwitchableLight;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -75,6 +80,8 @@ public class SkystoneAutonMode extends AutonOpMode {
     protected DcMotor rightFront;
     protected DcMotor rightBack;
 
+    protected NormalizedColorSensor colourSensor;
+
     protected double blockLeftThreshold = -10;
     protected double blockRIghtThreshold = 20;
     /**
@@ -111,7 +118,7 @@ public class SkystoneAutonMode extends AutonOpMode {
             telemetry.update();
         }*/
     }
-    protected RelativePos locateStoneTarget(double tryTimeLimit)
+    protected RelativePos locateStoneTarget(double tryTimeLimit, boolean multiSampling)
     {
         updateStoneTargetPosition();
         resetStartTime();
@@ -129,22 +136,31 @@ public class SkystoneAutonMode extends AutonOpMode {
         double tempx;
         resetStartTime();
         boolean firstIt = true;
-        do {
-            updateStoneTargetPosition();
-            tempx = x2;
-            x2 = stoneLastTranslate.get(0);
-            if(!firstIt)
-            {
-                x1 = tempx;
-            }
-
-            firstIt = false;
-        }  while(!closeEnought(x1, x2, 0.5) && time < tryTimeLimit);
-
-        if(!closeEnought(x1, x2, 0.5))
+        if(multiSampling)
         {
-            return RelativePos.FAILED_TO_PROCESS;
+            do {
+                updateStoneTargetPosition();
+                tempx = x2;
+                x2 = stoneLastTranslate.get(0);
+                if(!firstIt)
+                {
+                    x1 = tempx;
+                }
+
+                firstIt = false;
+            }  while(!closeEnought(x1, x2, 0.5) && time < tryTimeLimit);
+
+            if(!closeEnought(x1, x2, 10))
+            {
+                return RelativePos.FAILED_TO_PROCESS;
+            }
         }
+        else
+        {
+            updateStoneTargetPosition();
+            x2 = stoneLastTranslate.get(0);
+        }
+
 
         if(x2 < 10)
         {
@@ -160,12 +176,43 @@ public class SkystoneAutonMode extends AutonOpMode {
         }
     }
 
+    protected RelativePos locateStoneTarget() //version with no multiSampling
+    {
+        updateStoneTargetPosition();
+        resetStartTime();
+        while(time < 4 && !targetVisible)
+        {
+            updateStoneTargetPosition();
+        }
+        if(!targetVisible)
+        {
+            return RelativePos.NOT_VISIBLE;
+        }
+
+        double x1 = 0;
+        updateStoneTargetPosition();
+        x1 = stoneLastTranslate.get(0);
+
+
+        if(x1 < 10)
+        {
+            return RelativePos.LEFT;
+        }
+        else if(x1 > 20)
+        {
+            return RelativePos.RIGHT;
+        }
+        else
+        {
+            return RelativePos.CENTER;
+        }
+    }
 
     protected void updateStoneTargetPosition()
     {
         targetVisible = false;
         //for (VuforiaTrackable trackable : allTrackables) {
-        if (((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).isVisible() && targetsSkyStone.get(0).getName() == "Stone Target") { //.get(0) returns the Skystone target
+        if (((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).isVisible()/* && targetsSkyStone.get(0).getName() == "Stone Target"*/) { //.get(0) returns the Skystone target
             telemetry.addLine("Stone Target Visible");
 
             targetVisible = true;
@@ -195,8 +242,8 @@ public class SkystoneAutonMode extends AutonOpMode {
                     translation.get(0), translation.get(1), translation.get(2));
 
             // express the rotation of the robot in degrees.
-            Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+            //Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
+            //telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
         }
         else
         {
@@ -504,6 +551,27 @@ public class SkystoneAutonMode extends AutonOpMode {
         }
 
     }
+
+    protected void initColourSensor()
+    {
+        colourSensor = hardwareMap.get(NormalizedColorSensor.class, "colourSensor");
+
+        if (colourSensor instanceof SwitchableLight) {
+            ((SwitchableLight)colourSensor).enableLight(true);
+        }
+
+    }
+
+    protected float[] getColourReadings()
+    {
+        float[] hsvValues = new float[3];
+
+        NormalizedRGBA colour = colourSensor.getNormalizedColors();
+        Color.colorToHSV(colour.toColor(), hsvValues);
+
+        return hsvValues;
+    }
+
 
 
 
