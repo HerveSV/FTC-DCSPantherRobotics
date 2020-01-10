@@ -27,14 +27,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package helperClassesA;
+
+
+import android.graphics.Color;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.SwitchableLight;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
@@ -53,11 +56,190 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 
-
-
-@TeleOp(name="SKYSTONE Vuforia Nav", group ="Concept")
 @Disabled
-public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
+abstract public class SkystonePantherMode extends PantherOpMode {
+
+
+    public enum RelativePos
+    {
+        LEFT,
+        CENTER,
+        RIGHT,
+        NOT_VISIBLE,
+    };
+
+    protected enum SkystonePattern
+    {
+        A,
+        B,
+        C,
+    };
+
+    protected final float robotToStoneStart = (47-18) * 25.4f;
+    /*protected DcMotor leftFront;
+    protected DcMotor leftBack;
+    protected DcMotor rightFront;
+    protected DcMotor rightBack;*/
+
+    protected SkystonePattern pattern;
+
+    protected NormalizedColorSensor colourSensor;
+
+    protected double blockLeftThreshold = -10;
+    protected double blockRIghtThreshold = 20;
+
+    protected final double LEFT_LIMIT = 10;
+    protected final double RIGHT_LIMIT = 30;
+    /**
+     * ATTENTION: The initRevImu method has to be called before using it.
+     */
+
+    //protected BNO055IMU revImu;
+
+
+    protected RelativePos locateStoneTarget(double tryTimeLimit)
+    {
+        updateStoneTargetPosition();
+        resetStartTime();
+        while(time < tryTimeLimit && !targetVisible)
+        {
+            updateStoneTargetPosition();
+        }
+
+        if(!targetVisible)
+        {
+            return RelativePos.NOT_VISIBLE;
+        }
+
+        double x1 = stoneLastTranslate.get(0);
+        double x2 = 0;
+        double tempx;
+        resetStartTime();
+        boolean firstIt = true;
+
+
+        do {
+            updateStoneTargetPosition();
+            tempx = x2;
+            x2 = stoneLastTranslate.get(0);
+            if(!firstIt)
+            {
+                x1 = tempx;
+            }
+
+            firstIt = false;
+        }  while(!closeEnought(x1, x2, 0.5) && time < tryTimeLimit);
+
+        /*
+        if(!closeEnought(x1, x2, 0.5))
+        {
+            return null;
+        }*/
+
+        if(x2 < LEFT_LIMIT)
+        {
+            return RelativePos.LEFT;
+        }
+        else if(x2 > RIGHT_LIMIT)
+        {
+            return RelativePos.RIGHT;
+        }
+        else
+        {
+            return RelativePos.CENTER;
+        }
+    }
+
+    protected RelativePos locateStoneTarget() //version with no multiSampling
+    {
+        updateStoneTargetPosition();
+        resetStartTime();
+        while(time < 2 && !targetVisible)
+        {
+            updateStoneTargetPosition();
+        }
+        if(!targetVisible)
+        {
+            return RelativePos.NOT_VISIBLE;
+        }
+
+        double x1 = 0;
+        updateStoneTargetPosition();
+        x1 = stoneLastTranslate.get(0);
+
+
+        if(x1 < 10)
+        {
+            return RelativePos.LEFT;
+        }
+        else if(x1 > 20)
+        {
+            return RelativePos.RIGHT;
+        }
+        else
+        {
+            return RelativePos.CENTER;
+        }
+    }
+
+    protected void updateStoneTargetPosition()
+    {
+        targetVisible = false;
+
+        if (((VuforiaTrackableDefaultListener) skyStonTrackable.getListener()).isVisible()) { //.get(0) returns the Skystone target
+            telemetry.addLine("Stone Target Visible");
+
+            targetVisible = true;
+            telemetry.addLine("VISIBLE");
+            // getUpdatedRobotLocation() will return null if no new information is available since
+            // the last time that call was made, or if the trackable is not currently visible.
+            OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).getUpdatedRobotLocation();
+            if (robotLocationTransform != null) {
+                lastLocation = robotLocationTransform;
+            }
+
+            OpenGLMatrix stoneLocationTransform = ((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).getPosePhone();
+            if (stoneLocationTransform != null) {
+                stoneLastLocation = stoneLocationTransform;
+                stoneLastTranslate = stoneLocationTransform.getTranslation();
+            }
+        }
+        //}
+        // Provide feedback as to where the robot is located (if we know).
+        if(targetVisible)
+        {
+            // express position (translation) of stone relative to robot
+
+            VectorF translation = stoneLastLocation.getTranslation();
+            telemetry.addData("Pos (mm)", "{X, Y, Z} = %.1f, %.1f, %.1f",
+                    translation.get(0), translation.get(1), translation.get(2));
+
+            // express the rotation of the robot in degrees.
+            //Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
+            //telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+        }
+        else
+        {
+            telemetry.addData("Visible Target", "none");
+        }
+        telemetry.update();
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**VUFORIA**/
 
     // IMPORTANT:  For Phone Camera, set 1) the camera source and 2) the orientation, based on how your phone is mounted:
     // 1) Camera Source.  Valid choices are:  BACK (behind screen) or FRONT (selfie side)
@@ -67,7 +249,6 @@ public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
     //
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
     private static final boolean PHONE_IS_PORTRAIT = false  ;
-
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
      * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
@@ -81,45 +262,54 @@ public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
      * and paste it in to your code on the next line, between the double quotes.
      */
     private static final String VUFORIA_KEY =
-            " -- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+            "AQ3zrMH/////AAABmQgjX1KBK0C1phksrbBBrSuDzSTsk5JkJT9qvebXyO1Z0qqJ81VvchXR6vfz30Lw3wmeT4ZAb+9EouIW3EHHB1CbAM1rMPsjaAUGXdt6Pw4kBu4fCJkfzqPJz0Tijt15kqHGxKzDP2JYv32PKVRL2rkLPTCON+yv8uIqx8/uuw+QmBYGCIAalRIlUNScFRLLwftF0aMuhE1LFNQb531X1c4+CJ3f8nCjoxZVO7Qtw399WlrNoKIk3jDzkku7X2Q/HxNaSKLGbn5L2NYgTkZHCYBTnRiVDcJ/D0BauCGWnF4ebV9LkP53kpj/iW7sZQphHfIzflaWHmRfLnbhVcwBbKcWj488468c/IuFWoVV6OsD";
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
     // We will define some constants and conversions here
-    private static final float mmPerInch        = 25.4f;
-    private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
+    protected static final float mmPerInch = 25.4f;
+    protected static final float mmTargetHeight = (6) * mmPerInch;          // the height of the center of the target image above the floor
 
     // Constant for Stone Target
-    private static final float stoneZ = 2.00f * mmPerInch;
+    protected static final float stoneZ = 2.00f * mmPerInch;
 
     // Constants for the center support targets
-    private static final float bridgeZ = 6.42f * mmPerInch;
-    private static final float bridgeY = 23 * mmPerInch;
-    private static final float bridgeX = 5.18f * mmPerInch;
-    private static final float bridgeRotY = 59;                                 // Units are degrees
-    private static final float bridgeRotZ = 180;
+    protected static final float bridgeZ = 6.42f * mmPerInch;
+    protected static final float bridgeY = 23 * mmPerInch;
+    protected static final float bridgeX = 5.18f * mmPerInch;
+    protected static final float bridgeRotY = 59;                                 // Units are degrees
+    protected static final float bridgeRotZ = 180;
 
     // Constants for perimeter targets
-    private static final float halfField = 72 * mmPerInch;
-    private static final float quadField  = 36 * mmPerInch;
+    protected static final float halfField = 72 * mmPerInch;
+    protected static final float quadField = 36 * mmPerInch;
 
     // Class Members
-    private OpenGLMatrix lastLocation = null;
-    private VuforiaLocalizer vuforia = null;
-    private boolean targetVisible = false;
-    private float phoneXRotate    = 0;
-    private float phoneYRotate    = 0;
-    private float phoneZRotate    = 0;
+    protected OpenGLMatrix lastLocation = null;
+    protected OpenGLMatrix stoneLastLocation = null;
+    protected VectorF stoneLastTranslate = null;
+    protected VuforiaLocalizer vuforia = null;
+    protected VuforiaTrackables targetsSkyStone;
+    protected List<VuforiaTrackable> allTrackables;
+    protected VuforiaTrackable skyStonTrackable;
+    protected boolean targetVisible = false;
+    protected float phoneXRotate = 0;
+    protected float phoneYRotate = 0;
+    protected float phoneZRotate = 0;
 
-    @Override public void runOpMode() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-         * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
-         */
+
+    // Next, translate the camera lens to where it is on the robot.
+    // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
+    protected float CAMERA_FORWARD_DISPLACEMENT = 4.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot center
+    protected float CAMERA_VERTICAL_DISPLACEMENT = 8.0f * mmPerInch;   // eg: Camera is 8 Inches above ground
+    protected float CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
+
+
+
+
+    protected void initVuforia()
+    {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-
-        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection   = CAMERA_CHOICE;
@@ -127,9 +317,7 @@ public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        VuforiaTrackables targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
+        targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
 
         VuforiaTrackable stoneTarget = targetsSkyStone.get(0);
         stoneTarget.setName("Stone Target");
@@ -158,10 +346,9 @@ public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
         VuforiaTrackable rear2 = targetsSkyStone.get(12);
         rear2.setName("Rear Perimeter 2");
 
-        // For convenience, gather together all the trackable objects in one easily-iterable collection */
-        List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
+        allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targetsSkyStone);
-
+        skyStonTrackable = stoneTarget;
         /**
          * In order for localization to work, we need to tell the system where each target is on the field, and
          * where the phone resides on the robot.  These specifications are in the form of <em>transformation matrices.</em>
@@ -270,64 +457,96 @@ public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
         final float CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
-                    .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
+                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
 
         /**  Let all the trackable listeners know where the phone is.  */
         for (VuforiaTrackable trackable : allTrackables) {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
+    }
 
-        // WARNING:
-        // In this sample, we do not wait for PLAY to be pressed.  Target Tracking is started immediately when INIT is pressed.
-        // This sequence is used to enable the new remote DS Camera Preview feature to be used with this sample.
-        // CONSEQUENTLY do not put any driving commands in this loop.
-        // To restore the normal opmode structure, just un-comment the following line:
+    /*protected void initRevImu()
+    {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
-        // waitForStart();
+        parameters.mode                = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json";
 
-        // Note: To use the remote camera preview:
-        // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
-        // Tap the preview window to receive a fresh image.
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        revImu = hardwareMap.get(BNO055IMU.class, "imu");
 
-        targetsSkyStone.activate();
-        while (!isStopRequested()) {
+        revImu.initialize(parameters);
 
-            // check all the trackable targets to see which one (if any) is visible.
-            targetVisible = false;
-            for (VuforiaTrackable trackable : allTrackables) {
-                if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
-                    telemetry.addData("Visible Target", trackable.getName());
-                    targetVisible = true;
+        telemetry.addData("Mode", "calibrating...");
+        telemetry.update();
 
-                    // getUpdatedRobotLocation() will return null if no new information is available since
-                    // the last time that call was made, or if the trackable is not currently visible.
-                    OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
-                    if (robotLocationTransform != null) {
-                        lastLocation = robotLocationTransform;
-                    }
-                    break;
-                }
-            }
-
-            // Provide feedback as to where the robot is located (if we know).
-            if (targetVisible) {
-                // express position (translation) of robot in inches.
-                VectorF translation = lastLocation.getTranslation();
-                telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                        translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
-
-                // express the rotation of the robot in degrees.
-                Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-                telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-            }
-            else {
-                telemetry.addData("Visible Target", "none");
-            }
-            telemetry.update();
+        // make sure the imu gyro is calibrated before continuing.
+        while (!isStopRequested() && !revImu.isGyroCalibrated())
+        {
+            sleep(50);
+            idle();
         }
 
-        // Disable Tracking when we are done;
-        targetsSkyStone.deactivate();
+        telemetry.addData("Mode", "waiting for start");
+        telemetry.addData("imu calib status", revImu.getCalibrationStatus().toString());
+        telemetry.update();
+    }*/
+
+    private boolean closeEnought(double par1, double par2, double precision)
+    {
+        /*double largerPar;
+        double smallerPar;
+        if(par1 > par2)
+        {
+            largerPar = par1;
+            smallerPar = par2;
+        }
+        else
+        {
+            largerPar = par2;
+            smallerPar = par1;
+        }*/
+
+        double diff = Math.abs(par1 - par2);
+        if(diff <= precision)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
     }
+
+    protected void initColourSensor()
+    {
+        colourSensor = hardwareMap.get(NormalizedColorSensor.class, "colourSensor");
+
+        if (colourSensor instanceof SwitchableLight) {
+            ((SwitchableLight)colourSensor).enableLight(true);
+        }
+
+    }
+
+    protected float[] getColourReadings()
+    {
+        float[] hsvValues = new float[3];
+
+        NormalizedRGBA colour = colourSensor.getNormalizedColors();
+        Color.colorToHSV(colour.toColor(), hsvValues);
+
+        return hsvValues;
+    }
+
+
+
+
+
 }

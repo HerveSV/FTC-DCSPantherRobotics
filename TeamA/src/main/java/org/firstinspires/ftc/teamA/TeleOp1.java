@@ -3,11 +3,15 @@ package org.firstinspires.ftc.teamA;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
+import helperClassesA.PIDController;
+import helperClassesA.PIDFmanager;
+
 @TeleOp
-public class FullUtilMecanumDrive extends LinearOpMode {
+public class TeleOp1 extends LinearOpMode {
 
     static final double COUNTS_PER_MOTOR_REV = 1478.4;
 
@@ -22,32 +26,34 @@ public class FullUtilMecanumDrive extends LinearOpMode {
     private Servo leftGrabber;
     private Servo rightGrabber;
 
-    private DcMotor armHingeMotor;
+    //private Servo hinge2;
+
+    private DcMotorEx armHingeMotor;
     private DcMotor armExtensionMotor;
-    private static final float ARM_H_MAXPOWER = 1.0f; //ARM_H values are used for movement of the arm hinge motor
-    private static final float ARM_H_THRESHOLD = 100.0f;
-    private static final int ARM_H_STEP = 1;
-    private static final int ARM_H_OFFSET_BOUND = 500;
+
     private static final int ARM_H_ACTIVATION_TARGET = 800;
     private static final int ARM_H_COUNT_BUFFER = 50;
-    private static final int ARM_H_COUNT_UPPER_LIMIT = 1500;
     private static final int ARM_H_COUNT_LOWER_LIMIT = 0;
+    private static final int ARM_H_COUNT_UPPER_LIMIT = 1500;
+    private static final int ARM_H_180_COUNTS = ARM_H_COUNT_UPPER_LIMIT - ARM_H_COUNT_LOWER_LIMIT;
+    private static final int ARM_H_GEAR_RATIO = 6;
+
 
     private static final int MAX_STONE_REACH = 10;
-    private int armHingeOffset = 0;
+
     private static final int[][] ARM_STONE_STAGES =
-    {
-            {1, 2}, //val one is hinge count and val 2 is extension count to achieve required height for n amount of blocks height
-            {5, 3},
-            {4, 2},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-    };
+            {
+                    {1, 2}, //val one is hinge count and val 2 is extension count to achieve required height for n amount of blocks height
+                    {5, 3},
+                    {4, 2},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+            };
 
 
     private static final int ARM_X_COUNTS_PER_MM = (int) COUNTS_PER_MOTOR_REV/5;
@@ -55,6 +61,8 @@ public class FullUtilMecanumDrive extends LinearOpMode {
     private static final int ARM_X_COUNT_BUFFER = 50;
     private static final int ARM_X_COUNT_UPPER_LIMIT = 10000;
     private static final int ARM_X_COUNT_LOWER_LIMIT= 0;
+
+    PIDController hingePID = new PIDController(PIDFmanager.getP(), PIDFmanager.getI(), PIDFmanager.getD());
     @Override
     public void runOpMode()
     {
@@ -67,10 +75,12 @@ public class FullUtilMecanumDrive extends LinearOpMode {
         leftIntake = hardwareMap.get(DcMotor.class, "leftIntake");
         rightIntake = hardwareMap.get(DcMotor.class, "rightIntake");
 
-        //leftGrabber = hardwareMap.get(Servo.class, "leftGrabber");
-        //rightGrabber = hardwareMap.get(Servo.class, "rightGrabber");
+        leftGrabber = hardwareMap.get(Servo.class, "leftGrabber");
+        rightGrabber = hardwareMap.get(Servo.class, "rightGrabber");
 
-        armHingeMotor = hardwareMap.get(DcMotor.class, "armHingeMotor");
+        //hinge2 = hardwareMap.get(Servo.class, "servoHinge");
+
+        armHingeMotor = hardwareMap.get(DcMotorEx.class, "armHingeMotor");
         armExtensionMotor = hardwareMap.get(DcMotor.class, "armExtensionMotor");
 
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -91,47 +101,51 @@ public class FullUtilMecanumDrive extends LinearOpMode {
         /* Wait for the game to start (driver presses PLAY) waitForStart(); */
         //leftFront.setDirection(DcMotor.Direction.REVERSE);
         leftBack.setDirection(DcMotor.Direction.REVERSE);
-        //leftGrabber.setDirection(Servo.Direction.REVERSE);
+
+        leftGrabber.setDirection(Servo.Direction.REVERSE);
         //armHingeMotor.setDirection(DcMotorSimple.Direction.REVERSE); //positive power needs to equal the armHinge moving up.
 
+        hingePID.setContinuous(true);
+        //hingePID.setTolerance();
 
-
+        PIDFmanager.setPIDF(armHingeMotor);
+        PIDFmanager.setPIDF(armExtensionMotor);
         /**
-        Robot wheel mapping:
-                X
-              X   X
-            X FRONT X
-          X           X
-        X  LF       RF  X
-      X                   X
-    X                       X            Mecanum need to be aligned to create a diamond-square shape
-      X                   X
-        X  LB       RB  X
-          X           X
-            X       X
-              X   X
-                X
+         Robot wheel mapping:
+                     X
+                   X   X
+                 X FRONT X
+               X           X
+             X  LF       RF  X
+           X                   X
+         X                       X            Mecanum need to be aligned to create a diamond-square shape
+           X                   X
+             X  LB       RB  X
+               X           X
+                 X       X
+                   X   X
+                     X
 
-              */
+         */
 
         /**
          GAMEPAD 1:
-            Left stick x: Controls robot turn
-            Right stick x: Controls robot strafe
-            Right stick y: Controls robot tank drive
-            B: Toggles Slow Move mode (4x slower)
+         Left stick x: Controls robot turn
+         Right stick x: Controls robot strafe
+         Right stick y: Controls robot tank drive
+         B: Toggles Slow Move mode (4x slower)
 
          GAMEPAD 2:
-            Left trigger: Moves arm hinge counter-clockwise
-            Right trigger: Moves arm hinge clockwise
-            Left bumper: Toggles stone grabbers
-            Right bumper: Toggles stone intake system
-            Dpad Up: Increments stone target
-            Dpad Down: Decrements stone target
-            Dpad Left: Retracts arm extension
-            Dpad Right: Increases arm extension
-            X: Toggles arm into intake and active state
-            Y: Refreshes arm position to fit the stone target
+         Left trigger: Moves arm hinge counter-clockwise
+         Right trigger: Moves arm hinge clockwise
+         Left bumper: Toggles stone grabbers
+         Right bumper: Toggles stone intake system
+         Dpad Up: Increments stone target
+         Dpad Down: Decrements stone target
+         Dpad Left: Retracts arm extension
+         Dpad Right: Increases arm extension
+         X: Toggles arm into intake and active state
+         Y: Refreshes arm position to fit the stone target
 
 
          */
@@ -149,13 +163,17 @@ public class FullUtilMecanumDrive extends LinearOpMode {
 
 
         boolean moveIntake = false;
-        double a2ToggleTime = 0;
+        double rb1ToggleTime = 0;
+
+        boolean spitIntake = false;
+        double lb1ToggleTime = 0;
 
         boolean closeGrabbers = false;
+        double a2ToggleTime = 0;
 
         boolean keepArmHingePos = false;
         int armHingeTarget = 0;
-        boolean armHingeActive = false;
+        boolean armHingeActive = true;
         double x2ToggleTime = 0;
 
 
@@ -252,7 +270,7 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             /**
              * Stone grabbers
              */
-            /*boolean left_bumper2 = this.gamepad2.left_bumper;
+            boolean left_bumper2 = this.gamepad2.left_bumper;
             if(left_bumper2 && closeGrabbers && (this.getRuntime()-a2ToggleTime)>= toggleDelay) {
                 closeGrabbers = false;
                 a2ToggleTime = this.getRuntime();
@@ -264,28 +282,43 @@ public class FullUtilMecanumDrive extends LinearOpMode {
 
             if(closeGrabbers)
             {
-                leftGrabber.setPosition(0.5);
-                rightGrabber.setPosition(0.5);
+                leftGrabber.setPosition(0.2);
+                rightGrabber.setPosition(0.2);
             }
             else
             {
                 leftGrabber.setPosition(0);
                 rightGrabber.setPosition(0);
-            }*/
+            }
 
 
             /**
              * Stone intake system
              */
-            boolean right_bumper2 = this.gamepad1.right_bumper;
-            if(right_bumper2 && moveIntake && (this.getRuntime()-a2ToggleTime)>= toggleDelay) {
+            boolean right_bumper1 = this.gamepad1.right_bumper;
+            if(right_bumper1 && moveIntake && (this.getRuntime()-rb1ToggleTime)>= toggleDelay) {
                 moveIntake = false;
-                a2ToggleTime = this.getRuntime();
+                rb1ToggleTime = this.getRuntime();
             }
-            else if(right_bumper2 && (this.getRuntime()-a2ToggleTime)>= toggleDelay) {
+            else if(right_bumper1 && (this.getRuntime()-rb1ToggleTime)>= toggleDelay) {
                 moveIntake = true;
-                a2ToggleTime = this.getRuntime();
+                spitIntake = false;
+                rb1ToggleTime = this.getRuntime();
             }
+
+            boolean left_bumper1 = this.gamepad1.left_bumper;
+            if(left_bumper1 && spitIntake && (this.getRuntime()-lb1ToggleTime)>= toggleDelay) {
+                spitIntake = false;
+                lb1ToggleTime = this.getRuntime();
+            }
+            else if(left_bumper1 && (this.getRuntime()-lb1ToggleTime)>= toggleDelay) {
+                moveIntake = false;
+                spitIntake = true;
+
+                lb1ToggleTime = this.getRuntime();
+            }
+
+
 
             if(moveIntake)
             {
@@ -298,11 +331,23 @@ public class FullUtilMecanumDrive extends LinearOpMode {
                 rightIntake.setPower(0);
             }
 
+            if(spitIntake)
+            {
+                leftIntake.setPower(1);
+                rightIntake.setPower(-
+                        1);
+            }
+            else
+            {
+                leftIntake.setPower(0);
+                rightIntake.setPower(0);
+            }
+
 
             /**
              * ARM
              */
-            boolean X_button2 = this.gamepad1.x;
+            boolean X_button2 = this.gamepad2.x;
             if(X_button2 && armHingeActive && (this.getRuntime()-x2ToggleTime)>= toggleDelay) {
                 armHingeActive = false;
                 x2ToggleTime = this.getRuntime();
@@ -342,7 +387,6 @@ public class FullUtilMecanumDrive extends LinearOpMode {
                 armHingeMotor.setTargetPosition(ARM_STONE_STAGES[targetStoneNum-1][0]);
                 armHingeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 armHingeMotor.setPower(0.5);
-
                 armExtensionMotor.setTargetPosition(ARM_STONE_STAGES[targetStoneNum-1][1]);
                 armExtensionMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 armExtensionMotor.setPower(0);
@@ -353,14 +397,17 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             {
                 if(armHingeMotor.getCurrentPosition() > ARM_H_COUNT_LOWER_LIMIT + ARM_H_COUNT_BUFFER)
                 {
-                    armHingeMotor.setPower(-0.5);
+                    hingePID.setSetpoint(0);
+                    armHingeMotor.setPower(hingePID.performPID(armHingeMotor.getCurrentPosition()));
                 }
+
+
                 else
                 {
                     armHingeMotor.setPower(0);
                 }
             }
-            else if(refreshingHinge)
+            /*else if(refreshingHinge)
             {
                 if(!armHingeMotor.isBusy())
                 {
@@ -377,43 +424,94 @@ public class FullUtilMecanumDrive extends LinearOpMode {
                     armExtensionMotor.setPower(0);
                     refreshingExtension = false;
                 }
-            }
+            }*/
             else
             {
-                double armHingePower = this.gamepad2.right_trigger/2 - this.gamepad2.left_trigger/2;
+                /**
+                 * STUFFFFFFF
+                 */
+                double armHingePower = (this.gamepad2.right_trigger - this.gamepad2.left_trigger);
 
-                /**if(armHingeMotor.getCurrentPosition() < ARM_H_COUNT_LOWER_LIMIT + ARM_H_COUNT_BUFFER && armHingePower < 0)
-                {
-                    armHingePower = 0;
-                }
-                else if(armHingeMotor.getCurrentPosition() >= ARM_H_COUNT_UPPER_LIMIT - ARM_H_COUNT_BUFFER)
-                {
-                    armHingePower = 0;
-                }**/
-                armHingeMotor.setPower(armHingePower);
 
-                if(!keepArmHingePos && armHingePower == 0)
+                if(armHingeMotor.getCurrentPosition() < ARM_H_COUNT_LOWER_LIMIT + ARM_H_COUNT_BUFFER && armHingePower < 0)
+                 {
+                    armHingePower = 0;
+                 }
+
+                 /*else if(armHingeMotor.getCurrentPosition() >= ARM_H_COUNT_UPPER_LIMIT - ARM_H_COUNT_BUFFER)
+                 {
+                 armHingePower = 0;
+                 }*/
+
+                if(!keepArmHingePos && armHingePower == 0 && armHingeMotor.getCurrentPosition() > ARM_H_COUNT_LOWER_LIMIT +ARM_H_COUNT_LOWER_LIMIT)
                 {
                     keepArmHingePos = true;
+                    armHingeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                     armHingeTarget = armHingeMotor.getCurrentPosition();
+                    hingePID.enable();
+                    hingePID.setSetpoint(armHingeTarget);
                 }
                 else if(keepArmHingePos && armHingePower != 0)
                 {
+                    //armHingeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    armHingeTarget = 0;
                     keepArmHingePos = false;
                 }
+
+
 
                 //HINGE MOVEMENT
                 if(keepArmHingePos)
                 {
-                    armHingeMotor.setPower(1.0f * getArmHingePower(armHingeTarget, armHingeMotor.getCurrentPosition()));
+                    armHingeMotor.setPower(hingePID.performPID(armHingeMotor.getCurrentPosition()));
+                    //armHingeMotor.setPower(1.0f * getArmHingePower(armHingeTarget, armHingeMotor.getCurrentPosition()));
+                }
+                else if(!keepArmHingePos)
+                {
+                    armHingeMotor.setPower(armHingePower);
+                    //armHingeMotor.setPower(armHingePower + hingePID.performPID());
                 }
                 else
                 {
-                    armHingeMotor.setPower(armHingePower);
+
+                    armHingeMotor.setPower(0);
                 }
 
+
+                double armExtensionPower = 0;
+                if(this.gamepad2.dpad_up)
+                {
+                    armExtensionPower = 1;
+                }
+                else if(this.gamepad2.dpad_down)
+                {
+                    armExtensionPower = -1;
+                }
+
+                armExtensionMotor.setPower(armExtensionPower);
+
+                //double hinge2Pos = 0;
+                /*if(this.gamepad2.right_bumper){
+                    if(hinge2.getPosition() <= 0.9)
+                    {
+                        hinge2.setPosition(hinge2.getPosition()+0.1);
+                    }
+                }
+
+                else if(this.gamepad2.left_bumper)
+                {
+                    if(hinge2.getPosition() >= 0.1)
+                    {
+                        hinge2.setPosition(hinge2.getPosition()-0.1);
+                    }
+
+                }*/
+
+                armExtensionMotor.setPower(armExtensionPower);
+
+
                 //EXTENSION MOVEMENT
-                if(this.gamepad2.dpad_right)
+                /*if(this.gamepad2.dpad_right)
                 {
                     armExtensionTarget += ARM_X_STEP;
                 }
@@ -433,7 +531,7 @@ public class FullUtilMecanumDrive extends LinearOpMode {
                 else
                 {
                     armExtensionMotor.setPower(0);
-                }
+                }*/
             }
 
             //EXTENSION LIMITER
@@ -442,8 +540,12 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             telemetry.addData("LeftBack Power", leftBack.getPower());
             telemetry.addData("RightFront Power", rightFront.getPower());
             telemetry.addData("RightBack Power", rightBack.getPower());
-            telemetry.addData("Arm Pwr", this.gamepad2.right_trigger/2 - this.gamepad2.left_trigger/2);
+            telemetry.addData("ArmHinge Power", armHingeMotor.getPower());
+            telemetry.addData("ArmHinge Target", armHingeTarget);
+            telemetry.addData("Arm Active", armHingeActive);
+            telemetry.addData("Refreshing hinge", refreshingHinge);
             telemetry.addData("Slow mode", slowMove);
+            telemetry.addData("Closing Grabbers", closeGrabbers);
             telemetry.addData("Intake on", moveIntake);
             telemetry.addData("Grabbers closed", closeGrabbers);
             telemetry.addData("Target Stone", targetStoneNum);
@@ -457,6 +559,22 @@ public class FullUtilMecanumDrive extends LinearOpMode {
             idle();
         }
     }
+
+
+    private double getArmAngle180()
+    {
+        int pos = armHingeMotor.getCurrentPosition();
+        int difFromOrigin = pos - ARM_H_COUNT_LOWER_LIMIT;
+
+        double angle = (difFromOrigin/ARM_H_180_COUNTS)*180;
+        return angle;
+    }
+
+    private static final float ARM_H_MAXPOWER = 0.5f; //ARM_H values are used for movement of the arm hinge motor
+    private static final float ARM_H_THRESHOLD = 300.0f;
+    private static final int ARM_H_STEP = 1;
+    private static final int ARM_H_OFFSET_BOUND = 800;
+    private int armHingeOffset = 0;
 
     private float getArmHingePower(int target, int current) {
         int diff = target - current;

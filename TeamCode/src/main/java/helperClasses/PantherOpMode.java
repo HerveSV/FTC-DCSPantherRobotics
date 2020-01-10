@@ -1,4 +1,4 @@
-package helperClassesA;
+package helperClasses;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -11,7 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @Disabled
-public class AutonOpMode extends LinearOpMode {
+abstract public class PantherOpMode extends LinearOpMode {
 
     protected DcMotor leftFront;
     protected DcMotor leftBack;
@@ -20,7 +20,7 @@ public class AutonOpMode extends LinearOpMode {
     protected DcMotor hMotor;
     protected BNO055IMU revImu;
 
-    protected DriveTrain driveTrain = DriveTrain.MECANUM;
+    private DriveTrainType driveTrainType = DriveTrainType.MECANUM;
 
     private Orientation lastAngles = new Orientation();
     private double globalAngle;
@@ -30,7 +30,7 @@ public class AutonOpMode extends LinearOpMode {
     static final double WHEEL_DIAMETER_MM = 78.0;     // For figuring circumference
     static final double COUNTS_PER_MM = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_MM * 3.1415);  //This is the amount of ticks we have every cm travelled by the wheel
 
-    public enum DriveTrain {
+    public enum DriveTrainType {
         MECANUM,
         INVERSE_MECANUM,
         HDRIVE,
@@ -49,26 +49,76 @@ public class AutonOpMode extends LinearOpMode {
         TURN,
         ARMUP,
         ARMDOWN,
-        FLIPSERVO,
-        BOTDOWN,
-        CHECK,
         STOP
     };
+    
 
-    @Override
-    public void runOpMode() throws InterruptedException
+    public void runState(State currState, double speed)
     {
-
+        if(currState != State.STOP && speed == 0)
+        {
+            runState(State.STOP, 1);
+            return;
+        }
+        speed = Math.abs(speed);
+        switch(driveTrainType)
+        {
+            case MECANUM:
+                switch(currState)
+                {
+                    case FORWARDS:
+                        leftFront.setPower(speed);
+                        rightFront.setPower(speed);
+                        leftBack.setPower(speed);
+                        rightBack.setPower(speed);
+                        break;
+                    case BACKWARDS:
+                        leftFront.setPower(-speed);
+                        rightFront.setPower(-speed);
+                        leftBack.setPower(-speed);
+                        rightBack.setPower(-speed);
+                        break;
+                    case LEFTSTRAFE:
+                        leftFront.setPower(speed);
+                        rightFront.setPower(-speed);
+                        leftBack.setPower(-speed);
+                        rightBack.setPower(speed);
+                        break;
+                    case RIGHTSTRAFE:
+                        leftFront.setPower(-speed);
+                        rightFront.setPower(speed);
+                        leftBack.setPower(speed);
+                        rightBack.setPower(-speed);
+                        break;
+                    case STOP:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        break;
+                    default:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
+                        break;
+                }
+                break;
+        }
     }
 
 
     public void runState(State currState, double distanceMm, double speed) {
         //this function is called
-        if(distanceMm == 0)
+        if(currState != State.STOP && (distanceMm == 0 || speed == 0))
         {
+            runState(State.STOP, distanceMm, 1);
             return;
         }
-        switch (driveTrain) {
+        speed = Math.abs(speed);
+        distanceMm = Math.abs(distanceMm);
+        switch (driveTrainType) {
 
             case MECANUM:
                 switch (currState) {
@@ -86,14 +136,14 @@ public class AutonOpMode extends LinearOpMode {
                         break;
                     case TURNLEFT:
                         //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
-                        encoderRotate(speed, -distanceMm);
+                        gyroRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
                         //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
                     case TURN:
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
                     case STRAFE:
                         if(distanceMm < 0)
@@ -105,9 +155,23 @@ public class AutonOpMode extends LinearOpMode {
                             runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
                         break;
+                    case STOP:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
+                        sleep((long)distanceMm);
+                        break;
                     default:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
                         break;
                 }
+                break;
             case INVERSE_MECANUM:
                 switch (currState) {
                     case LEFTSTRAFE:
@@ -124,14 +188,14 @@ public class AutonOpMode extends LinearOpMode {
                         break;
                     case TURNLEFT:
                         //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
-                        encoderRotate(speed, -distanceMm);
+                        gyroRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
                         //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
                     case TURN:
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
                     case STRAFE:
                         if(distanceMm < 0)
@@ -144,9 +208,23 @@ public class AutonOpMode extends LinearOpMode {
                         }
                         break;
 
+                    case STOP:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
+                        sleep((long)distanceMm);
+                        break;
                     default:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
                         break;
                 }
+                break;
             case HDRIVE:
                 switch (currState) {
                     case FORWARDS:
@@ -163,14 +241,14 @@ public class AutonOpMode extends LinearOpMode {
                         break;
                     case TURNLEFT:
                         //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
-                        encoderRotate(speed, -distanceMm);
+                        gyroRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
                         //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
                     case TURN:
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
                     case STRAFE:
                         if(distanceMm < 0)
@@ -182,9 +260,23 @@ public class AutonOpMode extends LinearOpMode {
                             runState(State.RIGHTSTRAFE, distanceMm, speed);
                         }
                         break;
+                    case STOP:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
+                        sleep((long)distanceMm);
+                        break;
                     default:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
                         break;
                 }
+                break;
 
             case PUSHBOT:
                 switch (currState) {
@@ -196,19 +288,33 @@ public class AutonOpMode extends LinearOpMode {
                         break;
                     case TURNLEFT:
                         //encoderDrive(speed, -distanceMm, -distanceMm, distanceMm, distanceMm);
-                        encoderRotate(speed, -distanceMm);
+                        gyroRotate(speed, -distanceMm);
                         break;
                     case TURNRIGHT:
                         //encoderDrive(speed, distanceMm, distanceMm, -distanceMm, -distanceMm);
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
                     case TURN:
-                        encoderRotate(speed, distanceMm);
+                        gyroRotate(speed, distanceMm);
                         break;
 
+                    case STOP:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
+                        sleep((long)distanceMm);
+                        break;
                     default:
+                        leftFront.setPower(0);
+                        rightFront.setPower(0);
+                        leftBack.setPower(0);
+                        rightBack.setPower(0);
+                        hMotor.setPower(0);
                         break;
                 }
+                break;
         }
     }
 
@@ -247,6 +353,16 @@ public class AutonOpMode extends LinearOpMode {
             rightFront.setPower(Math.abs(speed));
             rightBack.setPower(Math.abs(speed));
 
+            String mode = "";
+            if(leftBackMm == rightBackMm)
+            {
+                mode = "Straight";
+            }
+            else
+            {
+                mode = "Strafe";
+            }
+
             // keep looping while we are still active, and both motors are still running.
             // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
             // its target position, the motion will stop.  This is "safer" in the event that the robot will
@@ -255,12 +371,13 @@ public class AutonOpMode extends LinearOpMode {
                     (leftFront.isBusy() && leftBack.isBusy() && rightFront.isBusy() && rightBack.isBusy())) {
 
                 // Display it for the driver.
-                telemetry.addData("Path1", "Running to :", newLeftFrontTarget, newLeftBackTarget, newRightFrontTarget, newRightBackTarget);
+                telemetry.addData("Path1","Running to :", newLeftFrontTarget, newLeftBackTarget, newRightFrontTarget, newRightBackTarget);
                 telemetry.addData("Path2", "Running at :",
                         leftFront.getCurrentPosition(),
                         leftBack.getCurrentPosition(),
                         rightFront.getCurrentPosition(),
                         leftBack.getCurrentPosition());
+                telemetry.addLine(mode);
                 telemetry.update();
             }
 
@@ -376,7 +493,7 @@ public class AutonOpMode extends LinearOpMode {
     }
 
 
-    private void encoderRotate(double speed, double degrees)
+    private void gyroRotate(double speed, double degrees)
     {
         double  leftPower, rightPower;
 
@@ -406,7 +523,7 @@ public class AutonOpMode extends LinearOpMode {
         else return;
 
         // set power to rotate.
-        if(driveTrain == DriveTrain.MECANUM || driveTrain == DriveTrain.INVERSE_MECANUM)
+        if(driveTrainType == DriveTrainType.MECANUM || driveTrainType == DriveTrainType.INVERSE_MECANUM)
         {
             leftFront.setPower(leftPower);
             leftBack.setPower(leftPower);
@@ -414,7 +531,7 @@ public class AutonOpMode extends LinearOpMode {
             rightFront.setPower(rightPower);
             rightBack.setPower(rightPower);
         }
-        else if(driveTrain == DriveTrain.HDRIVE || driveTrain == DriveTrain.PUSHBOT)
+        else if(driveTrainType == DriveTrainType.HDRIVE || driveTrainType == DriveTrainType.PUSHBOT)
         {
             leftFront.setPower(leftPower);
             rightFront.setPower(rightPower);
@@ -436,7 +553,7 @@ public class AutonOpMode extends LinearOpMode {
 
         // turn the motors off.
 
-        if(driveTrain == DriveTrain.MECANUM || driveTrain == DriveTrain.INVERSE_MECANUM)
+        if(driveTrainType == DriveTrainType.MECANUM || driveTrainType == DriveTrainType.INVERSE_MECANUM)
         {
             leftFront.setPower(0);
             leftBack.setPower(0);
@@ -445,7 +562,7 @@ public class AutonOpMode extends LinearOpMode {
             rightBack.setPower(0);
 
         }
-        else if(driveTrain == DriveTrain.HDRIVE || driveTrain == DriveTrain.PUSHBOT)
+        else if(driveTrainType == DriveTrainType.HDRIVE || driveTrainType == DriveTrainType.PUSHBOT)
         {
             leftFront.setPower(0);
             rightFront.setPower(0);
@@ -498,6 +615,9 @@ public class AutonOpMode extends LinearOpMode {
     }
 
 
+
+
+
     protected void initRevImu()
     {
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -529,5 +649,89 @@ public class AutonOpMode extends LinearOpMode {
         telemetry.addData("imu calib status", revImu.getCalibrationStatus().toString());
         telemetry.update();
     }
+
+    protected void rebaseDriveTrain(DriveTrainType newTrain)
+    {
+        driveTrainType = newTrain;
+    }
+
+    protected void setDriveTrainMode(DcMotor.RunMode runMode)
+    {
+        switch(driveTrainType)
+        {
+            case MECANUM:
+                leftFront.setMode(runMode);
+                rightFront.setMode(runMode);
+                leftBack.setMode(runMode);
+                rightBack.setMode(runMode);
+                break;
+            case INVERSE_MECANUM:
+                leftFront.setMode(runMode);
+                rightFront.setMode(runMode);
+                leftBack.setMode(runMode);
+                rightBack.setMode(runMode);
+                break;
+            case HDRIVE:
+                leftFront.setMode(runMode);
+                rightFront.setMode(runMode);
+                hMotor.setMode(runMode);
+                break;
+            case PUSHBOT:
+                leftFront.setMode(runMode);
+                rightFront.setMode(runMode);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    protected void initDriveTrain()
+    {
+        switch(driveTrainType)
+        {
+            case MECANUM:
+                leftFront = hardwareMap.get(DcMotor.class, "lf");
+                rightFront = hardwareMap.get(DcMotor.class, "rf");
+                leftBack = hardwareMap.get(DcMotor.class, "lb");
+                rightBack = hardwareMap.get(DcMotor.class, "rb");
+                break;
+            case INVERSE_MECANUM:
+                leftFront = hardwareMap.get(DcMotor.class, "lf");
+                rightFront = hardwareMap.get(DcMotor.class, "rf");
+                leftBack = hardwareMap.get(DcMotor.class, "lb");
+                rightBack = hardwareMap.get(DcMotor.class, "rb");
+                break;
+            case HDRIVE:
+                leftFront = hardwareMap.get(DcMotor.class, "ld");
+                rightFront = hardwareMap.get(DcMotor.class, "rd");
+                hMotor = hardwareMap.get(DcMotor.class, "hd");
+                break;
+            case PUSHBOT:
+                leftFront = hardwareMap.get(DcMotor.class, "ld");
+                rightFront = hardwareMap.get(DcMotor.class, "rd");
+                break;
+
+                default:
+                    break;
+        }
+    }
+
+    protected void initDriveTrain(DriveTrainType train)
+    {
+        rebaseDriveTrain(train);
+        initDriveTrain();
+    }
+
+    protected void initDriveTrain(DriveTrainType train, DcMotor.RunMode runMode)
+    {
+        rebaseDriveTrain(train);
+        initDriveTrain();
+        setDriveTrainMode(runMode);
+    }
+
+
+
+
 
 }

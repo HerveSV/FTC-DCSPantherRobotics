@@ -1,21 +1,22 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamA;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import helperClasses.AutonOpMode;
+import helperClassesA.SkystonePantherMode;
 
 
 @Autonomous
-public class ExampleAutonPath extends AutonOpMode {
+public class ExamplePantherPath extends SkystonePantherMode {
 
     private DcMotor leftFront;
     private DcMotor leftBack;
     private DcMotor rightFront;
     private DcMotor rightBack;
     @Override
-    public void runOpMode() {
+    public void runOpMode() throws InterruptedException
+    {
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
@@ -25,14 +26,23 @@ public class ExampleAutonPath extends AutonOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-
+        initRevImu();
         waitForStart();
 
         //this completes a complete square shaped path
-        runState(State.FORWARDS, 30, 0.5); //each side of this square path measures 30cm
-        runState(State.LEFTSTRAFE, 30, 0.5);
-        runState(State.BACKWARDS, 30, 0.5);
-        runState(State.RIGHTSTRAFE, 30, 0.5);
+        while(!this.gamepad1.left_bumper)
+        {
+            telemetry.addLine("Strafe Square");
+            telemetry.addLine("Awaiting start (left bumper)");
+            telemetry.update();
+        }
+
+        while(!this.gamepad1.left_bumper)
+        {
+            telemetry.addLine("Turn Square");
+            telemetry.addLine("Awaiting start (left bumper)");
+            telemetry.update();
+        }
 
         telemetry.addData("Path", "Complete");
         telemetry.update();

@@ -1,24 +1,34 @@
 package org.firstinspires.ftc.teamA;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import helperClassesA.SkystonePantherMode;
 
-@Autonomous
-public class testCamera extends SkystonePantherMode {
+
+@TeleOp
+public class TestPantherMode extends SkystonePantherMode {
 
     @Override
-    public void runOpMode() throws InterruptedException
+    public void runOpMode()
     {
+
         waitForStart();
         initVuforia();
-        targetsSkyStone.activate();
+
+
         while(opModeIsActive())
         {
-            locateStoneTarget();
+            targetsSkyStone.activate();
+            updateStoneTargetPosition();
         }
         targetsSkyStone.deactivate();
+
+
+
+
     }
+
 
 
 }

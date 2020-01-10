@@ -1,43 +1,34 @@
 package org.firstinspires.ftc.teamA;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-
-import helperClassesA.DriveStateMachine;
-import helperClassesA.SkystoneAutonMode;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 
+import helperClassesA.PantherOpMode;
 
 @Autonomous
-public class AutonMode1 extends SkystoneAutonMode {
-
+public class PantherStraightPath extends PantherOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException
     {
-
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
-
         initRevImu();
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+
         waitForStart();
-        initVuforia();
-        targetsSkyStone.activate();
 
         runState(State.FORWARDS, 500, 0.5);
-
-
+        telemetry.addLine("Forwards success");
+        telemetry.update();
+        sleep(5000);
+        runState(State.BACKWARDS, 500, 0.5);
+        telemetry.addLine("Backwards success");
+        telemetry.update();
     }
 
-
-    public AutonMode1()
-    {
-        CAMERA_FORWARD_DISPLACEMENT = 0.0f;
-        CAMERA_LEFT_DISPLACEMENT = 0.0f;
-        CAMERA_VERTICAL_DISPLACEMENT = 0.0f;
-    }
 
 }

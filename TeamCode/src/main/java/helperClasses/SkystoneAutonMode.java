@@ -27,16 +27,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package helperClassesA;
+package helperClasses;
 
 
 import android.graphics.Color;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
@@ -62,7 +58,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 @TeleOp
 
-public class SkystoneAutonMode extends AutonOpMode {
+abstract public class SkystoneAutonMode extends AutonOpMode {
 
 
     public enum RelativePos
@@ -71,61 +67,46 @@ public class SkystoneAutonMode extends AutonOpMode {
         CENTER,
         RIGHT,
         NOT_VISIBLE,
-        FAILED_TO_PROCESS,
+    };
+
+    protected enum SkystonePattern
+    {
+        A,
+        B,
+        C,
     };
 
     protected final float robotToStoneStart = (47-18) * 25.4f;
-    protected DcMotor leftFront;
+    /*protected DcMotor leftFront;
     protected DcMotor leftBack;
     protected DcMotor rightFront;
-    protected DcMotor rightBack;
+    protected DcMotor rightBack;*/
+
+    protected SkystonePattern pattern;
 
     protected NormalizedColorSensor colourSensor;
 
     protected double blockLeftThreshold = -10;
     protected double blockRIghtThreshold = 20;
+
+    protected final double LEFT_LIMIT = 10;
+    protected final double RIGHT_LIMIT = 30;
     /**
      * ATTENTION: The initRevImu method has to be called before using it.
      */
 
     //protected BNO055IMU revImu;
 
-    @Override
-    public void runOpMode() throws InterruptedException
-    {
 
-
-        /*leftFront = hardwareMap.get(DcMotor.class, "leftFront");
-        leftBack = hardwareMap.get(DcMotor.class, "leftBack");
-        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
-        rightBack = hardwareMap.get(DcMotor.class, "rightBack");
-
-        DriveStateMachine robotStatet = new DriveStateMachine(leftFront, rightFront, leftBack, rightBack, this, DriveStateMachine.DriveTrain.DRIVE_TRAIN_MECANUM);
-
-        waitForStart();
-        initVuforia();
-        targetsSkyStone.activate();
-        while (!isStopRequested()) {
-
-            // check all the trackable targets to see which one (if any) is visible.
-            locateStoneTarget();
-        }
-        // Disable Tracking when we are done;
-        targetsSkyStone.deactivate();
-        while(opModeIsActive())
-        {
-            telemetry.addData("Is stop requested", isStopRequested());
-            telemetry.update();
-        }*/
-    }
-    protected RelativePos locateStoneTarget(double tryTimeLimit, boolean multiSampling)
+    protected RelativePos locateStoneTarget(double tryTimeLimit)
     {
         updateStoneTargetPosition();
         resetStartTime();
-        while(time < 4 && !targetVisible)
+        while(time < tryTimeLimit && !targetVisible)
         {
             updateStoneTargetPosition();
         }
+
         if(!targetVisible)
         {
             return RelativePos.NOT_VISIBLE;
@@ -136,37 +117,31 @@ public class SkystoneAutonMode extends AutonOpMode {
         double tempx;
         resetStartTime();
         boolean firstIt = true;
-        if(multiSampling)
-        {
-            do {
-                updateStoneTargetPosition();
-                tempx = x2;
-                x2 = stoneLastTranslate.get(0);
-                if(!firstIt)
-                {
-                    x1 = tempx;
-                }
 
-                firstIt = false;
-            }  while(!closeEnought(x1, x2, 0.5) && time < tryTimeLimit);
 
-            if(!closeEnought(x1, x2, 10))
-            {
-                return RelativePos.FAILED_TO_PROCESS;
-            }
-        }
-        else
-        {
+        do {
             updateStoneTargetPosition();
+            tempx = x2;
             x2 = stoneLastTranslate.get(0);
-        }
+            if(!firstIt)
+            {
+                x1 = tempx;
+            }
 
+            firstIt = false;
+        }  while(!closeEnought(x1, x2, 0.5) && time < tryTimeLimit);
 
-        if(x2 < 10)
+        /*
+        if(!closeEnought(x1, x2, 0.5))
+        {
+            return null;
+        }*/
+
+        if(x2 < LEFT_LIMIT)
         {
             return RelativePos.LEFT;
         }
-        else if(x2 > 20)
+        else if(x2 > RIGHT_LIMIT)
         {
             return RelativePos.RIGHT;
         }
@@ -180,7 +155,7 @@ public class SkystoneAutonMode extends AutonOpMode {
     {
         updateStoneTargetPosition();
         resetStartTime();
-        while(time < 4 && !targetVisible)
+        while(time < 2 && !targetVisible)
         {
             updateStoneTargetPosition();
         }
@@ -208,10 +183,9 @@ public class SkystoneAutonMode extends AutonOpMode {
         }
     }
 
-    protected void updateStoneTargetPosition()
+    protected OpenGLMatrix updateStoneTargetPosition()
     {
         targetVisible = false;
-        //for (VuforiaTrackable trackable : allTrackables) {
         if (((VuforiaTrackableDefaultListener) targetsSkyStone.get(0).getListener()).isVisible()/* && targetsSkyStone.get(0).getName() == "Stone Target"*/) { //.get(0) returns the Skystone target
             telemetry.addLine("Stone Target Visible");
 
@@ -250,6 +224,8 @@ public class SkystoneAutonMode extends AutonOpMode {
             telemetry.addData("Visible Target", "none");
         }
         telemetry.update();
+
+        return stoneLastLocation;
     }
 
 

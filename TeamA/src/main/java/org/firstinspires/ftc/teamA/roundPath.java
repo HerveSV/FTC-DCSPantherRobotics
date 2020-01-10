@@ -3,14 +3,12 @@ package org.firstinspires.ftc.teamA;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import helperClassesA.DriveStateMachine;
-import helperClassesA.SkystoneAutonMode;
+import helperClassesA.SkystonePantherMode;
 
 @Autonomous
-public class roundPath extends SkystoneAutonMode {
+public class roundPath extends SkystonePantherMode {
 
     @Override
     public void runOpMode()
@@ -20,7 +18,8 @@ public class roundPath extends SkystoneAutonMode {
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
-        driveTrain = DriveTrain.MECANUM;
+
+        rebaseDriveTrain(DriveTrainType.MECANUM);
 
 
         waitForStart();
