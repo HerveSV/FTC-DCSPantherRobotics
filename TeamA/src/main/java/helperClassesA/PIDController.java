@@ -2,12 +2,14 @@ package helperClassesA;
 
 // PID controller courtesy of Peter Tischler, with modifications.
 
+import com.qualcomm.robotcore.util.Range;
+
 public class PIDController
 {
     private double m_P;                     // factor for "proportional" control
     private double m_I;                     // factor for "integral" control
     private double m_D;                     // factor for "derivative" control
-    private double m_input;                 // sensor input for pid controller
+    private double m_input;                // sensor input for pid controller
     private double m_maximumOutput = 1.0;	// |maximum output|
     private double m_minimumOutput = -1.0;	// |minimum output|
     private double m_maximumInput = 0.0;	// maximum input - limit setpoint to this
@@ -15,11 +17,14 @@ public class PIDController
     private boolean m_continuous = false;	// do the endpoints wrap around? eg. Absolute encoder
     private boolean m_enabled = false;      // is the pid controller enabled
     private double m_prevError = 0.0;       // the prior sensor input (used to compute velocity)
-    private double m_totalError = 0.0;      // the sum of the errors for use in the integral calc
+    private double m_totalError = 0.0;// the sum of the errors for use in the integral calc
+    private double m_timeLast = 0.0;
     private double m_tolerance = 0.05;      // the percentage error that is considered on target
     private double m_setpoint = 0.0;
     private double m_error = 0.0;
     private double m_result = 0.0;
+
+    private double m_maxError = 1000.0;
 
     /**
      * Allocate a PID object with the given constants for P, I, D
@@ -39,7 +44,7 @@ public class PIDController
      * This should only be called by the PIDTask
      * and is created during initialization.
      */
-    private void calculate()
+    private void calculate(double currTime)
     {
         int     sign = 1;
 
@@ -64,13 +69,14 @@ public class PIDController
             // Integrate the errors as long as the upcoming integrator does
             // not exceed the minimum and maximum output thresholds.
 
-            if ((Math.abs(m_totalError + m_error) * m_I < m_maximumOutput) &&
-                    (Math.abs(m_totalError + m_error) * m_I > m_minimumOutput))
-                m_totalError += m_error;
+
+            m_totalError = Range.clip(m_totalError + m_error * (currTime - m_timeLast), -m_maxError, m_maxError);
+
 
             // Perform the primary PID calculation
-            m_result = m_P * m_error + m_I * m_totalError + m_D * (m_error - m_prevError);
+            m_result = m_P * m_error + m_I * m_totalError + m_D * (m_error - m_prevError)/(currTime - m_timeLast);
 
+            m_timeLast = currTime;
             // Set the current error to the previous error for the next cycle.
             m_prevError = m_error;
 
@@ -131,9 +137,9 @@ public class PIDController
      * This is always centered on zero and constrained the the max and min outs
      * @return the latest calculated output
      */
-    public double performPID()
+    public double performPID(double currTime)
     {
-        calculate();
+        calculate(currTime);
         return m_result;
     }
 
@@ -143,10 +149,10 @@ public class PIDController
      * This is always centered on zero and constrained the the max and min outs
      * @return the latest calculated output
      */
-    public double performPID(double input)
+    public double performPID(double input, double currTime)
     {
         setInput(input);
-        return performPID();
+        return performPID(currTime);
     }
 
     /**
@@ -307,5 +313,10 @@ public class PIDController
         }
         else
             m_input = input;
+    }
+
+    public double getTotalError()
+    {
+        return m_totalError;
     }
 }

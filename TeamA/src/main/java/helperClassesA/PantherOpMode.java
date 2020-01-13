@@ -1,3 +1,9 @@
+/**
+ * 10/01/2020
+ * With the contribution of:
+ *  Hervé Schmit-Veiler - Head Programmer 2019, 2020...
+ */
+
 package helperClassesA;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;

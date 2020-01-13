@@ -17,7 +17,7 @@ public class displayEncoderCount extends LinearOpMode {
         testMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         testMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        while(!opModeIsActive())
+        while(opModeIsActive())
         {
             telemetry.addData("Encoder count: ", testMotor.getCurrentPosition());
         }

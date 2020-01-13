@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.util.Range;
 
 import helperClassesA.PIDController;
 import helperClassesA.PIDFmanager;
@@ -12,18 +13,24 @@ import helperClassesA.PIDFmanager;
 @TeleOp
 public class tunePID extends LinearOpMode {
     private DcMotorEx armHingeMotor;
-    private PIDController hingeController = new PIDController(0,0, 0);
+    double P = 0;
+    private PIDController hingeController = new PIDController(P,0, 0);
 
     private static final int ARM_H_COUNT_LOWER_LIMIT = 0;
-    private static final int ARM_H_COUNT_UPPER_LIMIT = 1500;
+    private static final int ARM_H_COUNT_UPPER_LIMIT = 1700;
     private static final int ARM_H_180_COUNTS = ARM_H_COUNT_UPPER_LIMIT - ARM_H_COUNT_LOWER_LIMIT;
 
     private double setpoint = 0;
+    private boolean upLastState = false;
+    private boolean downLastState = false;
+
+
 
     @Override
     public void runOpMode()
     {
         waitForStart();
+
 
         armHingeMotor = hardwareMap.get(DcMotorEx.class, "armHingeMotor");
         PIDFmanager.setPIDF(armHingeMotor);
@@ -31,15 +38,50 @@ public class tunePID extends LinearOpMode {
         armHingeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         hingeController.enable();
-        setpoint = getEncoderCount180(90);
+        setpoint = 90;
+        hingeController.setSetpoint(setpoint);
         armHingeMotor.setPower(0);
 
+        resetStartTime();
         double armPow = 0;
         while(opModeIsActive())
         {
+            if(this.gamepad1.dpad_up)
+            {
+                if (!upLastState)
+                {
+                    P += 0.05;
+                    hingeController.setPID(P, 0, 0);
+                    upLastState = true;
+                }
+            } else {
+                upLastState = false;
+            }
+            if(this.gamepad1.dpad_down)
+            {
+                if(!downLastState)
+                {
+                    P -= 0.05;
+                    hingeController.setPID(P, 0, 0);
+                    downLastState = true;
+                }
+
+            }
+            else {
+                downLastState = false;
+            }
 
 
-            armHingeMotor.setPower(hingeController.performPID(armHingeMotor.getCurrentPosition()));
+            armPow = hingeController.performPID(getArmAngle180(), getRuntime());
+            armHingeMotor.setPower(armPow);
+            telemetry.addData("Motor pwr", armHingeMotor.getPower());
+            telemetry.addData("Arm pwr", armPow);
+            telemetry.addData("Arm angle", getArmAngle180());
+            telemetry.addData("Total error", hingeController.getTotalError());
+            telemetry.addData("P", hingeController.getP());
+            telemetry.addData("I", hingeController.getI());
+            telemetry.addData("D", hingeController.getD());
+            telemetry.update();
 
         }
     }
@@ -48,9 +90,9 @@ public class tunePID extends LinearOpMode {
     private double getArmAngle180()
     {
         int pos = armHingeMotor.getCurrentPosition();
-        int difFromOrigin = pos - ARM_H_COUNT_LOWER_LIMIT;
+        double difFromOrigin = pos - ARM_H_COUNT_LOWER_LIMIT;
 
-        double angle = (difFromOrigin/ARM_H_180_COUNTS)*180;
+        double angle = Range.clip((difFromOrigin/ARM_H_180_COUNTS)*180, 0, 180);
         return angle;
     }
 
