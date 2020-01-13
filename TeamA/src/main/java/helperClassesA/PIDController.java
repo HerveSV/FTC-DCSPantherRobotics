@@ -46,8 +46,6 @@ public class PIDController
      */
     private void calculate(double currTime)
     {
-        int     sign = 1;
-
         // If enabled then proceed into controller calculations
         if (m_enabled)
         {
@@ -66,13 +64,15 @@ public class PIDController
                 }
             }
 
-            // Integrate the errors as long as the upcoming integrator does
-            // not exceed the minimum and maximum output thresholds.
-
-
             m_totalError = Range.clip(m_totalError + m_error * (currTime - m_timeLast), -m_maxError, m_maxError);
+            m_result = Range.clip(m_P * m_error +
+                            m_I * m_totalError +
+                            m_D * (m_error - m_prevError)/(currTime - m_timeLast),
+                            m_minimumOutput,
+                            m_maximumOutput);
+            m_timeLast = currTime;
 
-
+            /*
             // Perform the primary PID calculation
             m_result = m_P * m_error + m_I * m_totalError + m_D * (m_error - m_prevError)/(currTime - m_timeLast);
 
@@ -88,6 +88,8 @@ public class PIDController
                 m_result = m_maximumOutput * sign;
             else if (Math.abs(m_result) < m_minimumOutput)
                 m_result = m_minimumOutput * sign;
+
+             */
         }
     }
 

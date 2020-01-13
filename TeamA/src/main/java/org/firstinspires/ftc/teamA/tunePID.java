@@ -46,7 +46,7 @@ public class tunePID extends LinearOpMode {
         double armPow = 0;
         while(opModeIsActive())
         {
-            if(this.gamepad1.dpad_up)
+            if (this.gamepad1.dpad_up)
             {
                 if (!upLastState)
                 {
@@ -57,9 +57,9 @@ public class tunePID extends LinearOpMode {
             } else {
                 upLastState = false;
             }
-            if(this.gamepad1.dpad_down)
+            if (this.gamepad1.dpad_down)
             {
-                if(!downLastState)
+                if (!downLastState)
                 {
                     P -= 0.05;
                     hingeController.setPID(P, 0, 0);
@@ -71,9 +71,9 @@ public class tunePID extends LinearOpMode {
                 downLastState = false;
             }
 
-
             armPow = hingeController.performPID(getArmAngle180(), getRuntime());
             armHingeMotor.setPower(armPow);
+            telemetry.addData("Error", hingeController.getError());
             telemetry.addData("Motor pwr", armHingeMotor.getPower());
             telemetry.addData("Arm pwr", armPow);
             telemetry.addData("Arm angle", getArmAngle180());
